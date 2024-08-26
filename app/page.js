@@ -42,19 +42,19 @@ export default function HomePage() {
 
         <div className="flex space-x-4">
           <Link href="/attendance">
-            <a className="p-3 bg-green-500 text-white rounded-lg">
+            <p className="p-3 bg-green-500 text-white rounded-lg">
               Mark Attendance
-            </a>
+            </p>
           </Link>
           <Link href="/attendance/checkin">
-            <a className="p-3 bg-blue-500 text-white rounded-lg">
+            <p className="p-3 bg-blue-500 text-white rounded-lg">
               Check In
-            </a>
+            </p>
           </Link>
           <Link href="/attendance/checkout">
-            <a className="p-3 bg-orange-500 text-white rounded-lg">
+            <p className="p-3 bg-orange-500 text-white rounded-lg">
               Check Out
-            </a>
+            </p>
           </Link>
         </div>
       </main>
