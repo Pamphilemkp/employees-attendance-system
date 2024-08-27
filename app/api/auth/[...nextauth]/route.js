@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import dbConnect from '@/lib/mongoose';
-import User from '@/models/User';
+import dbConnect from '../../../../lib/mongoose';
+import User from '../../../../models/User';
 import bcrypt from 'bcryptjs';
 
 export const authOptions = {
@@ -14,7 +14,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         await dbConnect();
-        
+
         const user = await User.findOne({ email: credentials.email });
 
         if (user && bcrypt.compareSync(credentials.password, user.password)) {
@@ -48,4 +48,6 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET
 };
 
-export default NextAuth(authOptions);
+// Correctly export both GET and POST handlers
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };
