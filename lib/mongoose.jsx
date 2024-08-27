@@ -1,40 +1,35 @@
 import mongoose from 'mongoose';
-import { seedDatabase } from './seed';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
+  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
-let cached = global.mongoose;
+let cachedClient = global.mongo;
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+if (!cachedClient) {
+  cachedClient = global.mongo = { conn: null, promise: null };
 }
 
 async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
+  if (cachedClient.conn) {
+    return cachedClient.conn;
   }
 
-  if (!cached.promise) {
+  if (!cachedClient.promise) {
     const opts = {
-      bufferCommands: false,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cachedClient.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     });
   }
-  cached.conn = await cached.promise;
-
-  // Run the seed logic after connecting to the database
-  await seedDatabase();
-
-  return cached.conn;
+  
+  cachedClient.conn = await cachedClient.promise;
+  return cachedClient.conn;
 }
 
 export default dbConnect;

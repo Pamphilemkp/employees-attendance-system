@@ -56,16 +56,6 @@ export default function HomePage() {
               Mark Attendance
             </p>
           </Link>
-          <Link href="api/attendance/checkin">
-            <p className="p-3 bg-blue-500 text-white rounded-lg w-full max-w-xs text-center">
-              Check In
-            </p>
-          </Link>
-          <Link href="api/attendance/checkout">
-            <p className="p-3 bg-orange-500 text-white rounded-lg w-full max-w-xs text-center">
-              Check Out
-            </p>
-          </Link>
         </div>
       </main>
 
