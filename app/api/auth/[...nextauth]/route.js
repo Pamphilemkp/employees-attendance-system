@@ -1,53 +1,48 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import dbConnect from '../../../../lib/mongoose';
-import User from '../../../../models/User';
 import bcrypt from 'bcryptjs';
+import {dbConnect} from '../../../../lib/dbConnect';
+import User from '../../../../models/User';
 
-export const authOptions = {
+const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'text' },
-        password: { label: 'Password', type: 'password' }
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         await dbConnect();
-
         const user = await User.findOne({ email: credentials.email });
 
-        if (user && bcrypt.compareSync(credentials.password, user.password)) {
-          return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+        if (!user) {
+          return null;
         }
 
-        return null;
+        console.log('Original Password:', credentials.password);
+        console.log('Hashed Password from DB:', user.password);
+
+        const isMatch = await bcrypt.compare(credentials.password, user.password);
+        console.log('Password match result:', isMatch);
+
+        if (isMatch) {
+          return { id: user._id, name: user.name, email: user.email, role: user.role };
+        } else {
+          return null;
+        }
       }
     })
   ],
-  callbacks: {
-    async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role;
-      }
-      return session;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-      }
-      return token;
-    }
-  },
-  pages: {
-    signIn: '/auth/signin'
-  },
   session: {
-    jwt: true
+    jwt: true,
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
 };
 
-// Correctly export both GET and POST handlers
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+export const GET = NextAuth(authOptions);
+export const POST = NextAuth(authOptions);
