@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from 'react';
+import { useState } from 'react'; // Add this line to import useState
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useSession, getSession } from 'next-auth/react'; // Import getSession
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { data: session } = useSession(); // useSession to manage session data
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -28,13 +30,20 @@ export default function SignInPage() {
         return;
       }
 
-      router.replace('/');
+      // Fetch the session after signing in to get user details
+      const currentSession = await getSession();
+
+      // Check the role and redirect accordingly
+      if (currentSession?.user?.role === 'admin') {
+        router.replace('/admin'); // Redirect to the admin dashboard if the user is an admin
+      } else {
+        router.replace('/attendance'); // Redirect to attendance page for normal employees
+      }
     } catch (error) {
       console.error('SignIn error:', error);
       setError('An unexpected error occurred');
     }
   };
-
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100 sm:p-6">
       <motion.div 
@@ -93,3 +102,4 @@ export default function SignInPage() {
     </div>
   );
 }
+

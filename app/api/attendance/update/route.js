@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongoose';
-import Attendance from '@/models/Attendance';
+import {dbConnect} from '../../../../lib/dbConnect';
+import Attendance from '../../../../models/Attendance';
 
 export async function POST(request) {
   const { id, checkIn, checkOut } = await request.json();

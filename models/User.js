@@ -20,6 +20,11 @@ const userSchema = new Schema(
       required: true,
       unique: true, // Ensure employee ID is unique
     },
+    role: {
+      type: String,
+      enum: ['employee', 'admin'], // Define allowed roles
+      default: 'employee', // Set default role
+    },
   },
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );

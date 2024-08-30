@@ -5,7 +5,7 @@ import UserModel from '../../../../models/User';
 
 export const POST = async (request) => {
   try {
-    const { name, email, password, employeeId } = await request.json();
+    const { name, email, password, employeeId,role = 'employee' } = await request.json();
 
     if (!name || !email || !password || !employeeId) {
       return NextResponse.json(
@@ -49,6 +49,7 @@ export const POST = async (request) => {
       email,
       password: hashedPassword,
       employeeId,
+      role
     });
 
     // Log the stored user details

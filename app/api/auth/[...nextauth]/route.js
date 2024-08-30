@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import {dbConnect} from '../../../../lib/dbConnect';
+import { dbConnect } from '../../../../lib/dbConnect';
 import User from '../../../../models/User';
 
 const authOptions = {
@@ -20,14 +20,16 @@ const authOptions = {
           return null;
         }
 
-        console.log('Original Password:', credentials.password);
-        console.log('Hashed Password from DB:', user.password);
-
         const isMatch = await bcrypt.compare(credentials.password, user.password);
-        console.log('Password match result:', isMatch);
 
         if (isMatch) {
-          return { id: user._id, name: user.name, email: user.email, role: user.role };
+          return { 
+            id: user._id, 
+            name: user.name, 
+            email: user.email, 
+            role: user.role, 
+            employeeId: user.employeeId 
+          };
         } else {
           return null;
         }
@@ -36,6 +38,26 @@ const authOptions = {
   ],
   session: {
     jwt: true,
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.employeeId = user.employeeId;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.id = token.id;
+      session.user.name = token.name;
+      session.user.email = token.email;
+      session.user.employeeId = token.employeeId;
+      session.user.role = token.role;
+      return session;
+    }
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
