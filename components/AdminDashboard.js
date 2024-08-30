@@ -1,37 +1,140 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('attendance');
+  const [users, setUsers] = useState([]);
+  const [editingUser, setEditingUser] = useState(null);
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    employeeId: '',
+    role: 'employee',
+    password: '',
+  });
+
   const [attendances, setAttendances] = useState([]);
-  const [loading, setLoading] = useState(true); // State for loading
-  const [editing, setEditing] = useState(null);
+  const [editingAttendance, setEditingAttendance] = useState(null);
   const [editedCheckIn, setEditedCheckIn] = useState('');
   const [editedCheckOut, setEditedCheckOut] = useState('');
 
   useEffect(() => {
-    const fetchAttendances = async () => {
-      try {
-        const response = await fetch('/api/attendance');
-        if (!response.ok) {
-          throw new Error('Failed to fetch attendance records.');
-        }
-        const data = await response.json();
-        setAttendances(data);
-        setLoading(false); // Stop loading once data is fetched
-      } catch (error) {
-        console.error('Error fetching attendances:', error);
-        toast.error('Failed to load attendance records.', {
-          position: 'top-right',
-        });
-        setLoading(false); // Stop loading if there's an error
-      }
-    };
-
+    fetchUsers();
     fetchAttendances();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to load users.');
+    }
+  };
+
+  const fetchAttendances = async () => {
+    try {
+      const res = await fetch('/api/admin/attendances');
+      const data = await res.json();
+      setAttendances(data);
+    } catch (error) {
+      console.error('Error fetching attendances:', error);
+      toast.error('Failed to load attendance records.');
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserForm({ ...userForm, [name]: value });
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userForm),
+      });
+
+      if (res.ok) {
+        toast.success('User created successfully!');
+        setUserForm({ name: '', email: '', employeeId: '', role: 'employee', password: '' });
+        fetchUsers(); // Refresh users list
+      } else {
+        const { message } = await res.json();
+        toast.error(message || 'Failed to create user.');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error('Failed to create user.');
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    try {
+      const res = await fetch(`/api/admin/users/${editingUser._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userForm),
+      });
+
+      if (res.ok) {
+        toast.success('User updated successfully!');
+        setEditingUser(null);
+        setUserForm({ name: '', email: '', employeeId: '', role: 'employee', password: '' });
+        fetchUsers(); // Refresh users list
+      } else {
+        const { message } = await res.json();
+        toast.error(message || 'Failed to update user.');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast.error('Failed to update user.');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        toast.success('User deleted successfully!');
+        fetchUsers(); // Refresh users list
+      } else {
+        toast.error('Failed to delete user.');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user.');
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setUserForm({
+      name: user.name,
+      email: user.email,
+      employeeId: user.employeeId,
+      role: user.role,
+      password: '', // Leave empty for no change
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+    setUserForm({ name: '', email: '', employeeId: '', role: 'employee', password: '' });
+  };
 
   const formatDate = (date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -44,15 +147,13 @@ export default function AdminDashboard() {
     }).format(new Date(date));
   };
 
-  const handleEdit = (attendance) => {
-    setEditing(attendance._id);
+  const handleEditAttendance = (attendance) => {
+    setEditingAttendance(attendance._id);
     setEditedCheckIn(new Date(attendance.checkIn).toISOString().slice(0, 16));
-    setEditedCheckOut(
-      attendance.checkOut ? new Date(attendance.checkOut).toISOString().slice(0, 16) : ''
-    );
+    setEditedCheckOut(attendance.checkOut ? new Date(attendance.checkOut).toISOString().slice(0, 16) : '');
   };
 
-  const handleSave = async (id) => {
+  const handleSaveAttendance = async (id) => {
     try {
       const response = await fetch('/api/attendance/update', {
         method: 'POST',
@@ -68,164 +169,232 @@ export default function AdminDashboard() {
 
       const data = await response.json();
       if (data.success) {
-        setEditing(null);
-        const updatedResponse = await fetch('/api/attendance');
-        const updatedData = await updatedResponse.json();
-        setAttendances(updatedData);
-        toast.success('Attendance updated successfully!', {
-          position: 'top-right',
-        });
+        setEditingAttendance(null);
+        fetchAttendances(); // Refresh data
+        toast.success('Attendance updated successfully!');
       } else {
-        toast.error('Error updating attendance.', {
-          position: 'top-right',
-        });
+        toast.error('Error updating attendance.');
       }
     } catch (error) {
       console.error('Error saving attendance:', error);
-      toast.error('Failed to save attendance. Please try again.', {
-        position: 'top-right',
-      });
+      toast.error('Error updating attendance.');
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center"
-        >
-          <svg
-            className="w-16 h-16 text-blue-600 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            ></path>
-          </svg>
-          <p className="mt-4 text-lg font-medium text-gray-700">Loading Admin Dashboard...</p>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Toaster />
       <header className="p-4 text-center text-white bg-blue-700">
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl font-bold"
-        >
-          Admin Dashboard
-        </motion.h1>
-      </header>
-      <main className="p-4">
-        <div className="overflow-x-auto">
-          <motion.table
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="min-w-full bg-white border border-gray-300 rounded-lg shadow-sm"
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <div className="mt-4">
+          <button
+            onClick={() => setActiveTab('attendance')}
+            className={`p-2 mx-2 ${activeTab === 'attendance' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
           >
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="px-4 py-3">Employee ID</th>
-                <th className="px-4 py-3">Check-In</th>
-                <th className="px-4 py-3">Check-Out</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {attendances.length > 0 ? (
-                attendances.map((attendance) => (
-                  <tr key={attendance._id} className="border-t">
-                    <td className="px-4 py-3 text-center">{attendance.employeeId}</td>
-                    <td className="px-4 py-3 text-center">
-                      {editing === attendance._id ? (
-                        <input
-                          type="datetime-local"
-                          value={editedCheckIn}
-                          onChange={(e) => setEditedCheckIn(e.target.value)}
-                          className="w-full p-2 border rounded"
-                        />
-                      ) : (
-                        formatDate(attendance.checkIn)
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {editing === attendance._id ? (
-                        <input
-                          type="datetime-local"
-                          value={editedCheckOut}
-                          onChange={(e) => setEditedCheckOut(e.target.value)}
-                          className="w-full p-2 border rounded"
-                        />
-                      ) : attendance.checkOut ? (
-                        formatDate(attendance.checkOut)
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {editing === attendance._id ? (
-                        <>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleSave(attendance._id)}
-                            className="p-2 mr-2 text-white bg-green-500 rounded-lg shadow-md hover:bg-green-600"
-                          >
-                            Save
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setEditing(null)}
-                            className="p-2 text-white bg-gray-500 rounded-lg shadow-md hover:bg-gray-600"
-                          >
-                            Cancel
-                          </motion.button>
-                        </>
-                      ) : (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleEdit(attendance)}
-                          className="p-2 text-white bg-blue-500 rounded-lg shadow-md hover:bg-blue-600"
-                        >
-                          Edit
-                        </motion.button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-4 py-3 text-center text-gray-500">
-                    No attendance records found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </motion.table>
+            Manage Attendance
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`p-2 mx-2 ${activeTab === 'users' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
+          >
+            Manage Users
+          </button>
         </div>
+      </header>
+
+      <main className="p-4">
+        {activeTab === 'attendance' && (
+          <section>
+            <h2 className="text-2xl font-semibold">Manage Attendance</h2>
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="px-4 py-3">Employee ID</th>
+                    <th className="px-4 py-3">Check-In</th>
+                    <th className="px-4 py-3">Check-Out</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendances.length > 0 ? (
+                    attendances.map((attendance) => (
+                      <tr key={attendance._id}>
+                        <td className="px-4 py-3">{attendance.employeeId}</td>
+                        <td className="px-4 py-3">
+                          {editingAttendance === attendance._id ? (
+                            <input
+                              type="datetime-local"
+                              value={editedCheckIn}
+                              onChange={(e) => setEditedCheckIn(e.target.value)}
+                              className="w-full p-2 border rounded"
+                            />
+                          ) : (
+                            formatDate(attendance.checkIn)
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingAttendance === attendance._id ? (
+                            <input
+                              type="datetime-local"
+                              value={editedCheckOut}
+                              onChange={(e) => setEditedCheckOut(e.target.value)}
+                              className="w-full p-2 border rounded"
+                            />
+                          ) : attendance.checkOut ? (
+                            formatDate(attendance.checkOut)
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {editingAttendance === attendance._id ? (
+                            <>
+                              <button
+                                onClick={() => handleSaveAttendance(attendance._id)}
+                                className="p-2 mr-2 text-white bg-green-500 rounded"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditingAttendance(null)}
+                                className="p-2 text-white bg-gray-500 rounded"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => handleEditAttendance(attendance)}
+                              className="p-2 text-white bg-blue-500 rounded"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="px-4 py-3 text-center">
+                        No attendance records found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'users' && (
+          <section>
+            <h2 className="text-2xl font-semibold">Manage Users</h2>
+            <div className="my-4">
+              <input
+                type="text"
+                name="name"
+                value={userForm.name}
+                onChange={handleInputChange}
+                placeholder="Name"
+                className="p-2 mr-2 border rounded"
+              />
+              <input
+                type="email"
+                name="email"
+                value={userForm.email}
+                onChange={handleInputChange}
+                placeholder="Email"
+                className="p-2 mr-2 border rounded"
+              />
+              <input
+                type="text"
+                name="employeeId"
+                value={userForm.employeeId}
+                onChange={handleInputChange}
+                placeholder="Employee ID"
+                className="p-2 mr-2 border rounded"
+              />
+              <select
+                name="role"
+                value={userForm.role}
+                onChange={handleInputChange}
+                className="p-2 mr-2 border rounded"
+              >
+                <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
+              </select>
+              <input
+                type="password"
+                name="password"
+                value={userForm.password}
+                onChange={handleInputChange}
+                placeholder="Password"
+                className="p-2 mr-2 border rounded"
+              />
+              <button
+                onClick={editingUser ? handleUpdateUser : handleCreateUser}
+                className="p-2 text-white bg-green-500 rounded"
+              >
+                {editingUser ? 'Update User' : 'Create User'}
+              </button>
+              {editingUser && (
+                <button
+                  onClick={handleCancelEdit}
+                  className="p-2 ml-2 text-white bg-gray-500 rounded"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Email</th>
+                    <th className="px-4 py-3">Employee ID</th>
+                    <th className="px-4 py-3">Role</th>
+                    <th className="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <tr key={user._id}>
+                        <td className="px-4 py-3">{user.name}</td>
+                        <td className="px-4 py-3">{user.email}</td>
+                        <td className="px-4 py-3">{user.employeeId}</td>
+                        <td className="px-4 py-3">{user.role}</td>
+                        <td className="flex items-center px-4 py-3">
+                          <button
+                            onClick={() => handleEditUser(user)}
+                            className="p-2 mr-2 text-white bg-blue-500 rounded"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user._id)}
+                            className="p-2 text-white bg-red-500 rounded"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="px-4 py-3 text-center">
+                        No users found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
