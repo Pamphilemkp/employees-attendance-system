@@ -1,34 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   const validateEmail = (email) => {
-    const errors = {};
     if (!email) {
-      errors.email = 'Email address is required';
+      return 'Email address is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Email address is invalid';
+      return 'Email address is invalid';
     }
-    return errors;
+    return '';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
-    setSuccess('');
 
-    const errors = validateEmail(email);
-    if (Object.keys(errors).length > 0) {
-      setError(errors.email);
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setError(emailError);
       setIsSubmitting(false);
       return;
     }
@@ -43,22 +40,30 @@ export default function ForgotPasswordPage() {
       });
 
       if (res.ok) {
-        setSuccess('If an account with that email exists, a password reset link has been sent.');
+        toast.success('If an account with that email exists, a password reset link has been sent.', { position: 'top-right' });
         setEmail('');
       } else {
         const { message } = await res.json();
         setError(message);
+        toast.error(message, { position: 'top-right' });
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.', { position: 'top-right' });
     }
 
     setIsSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 sm:p-6">
-      <div className="max-w-md w-full space-y-8">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100 sm:p-6">
+      <Toaster />
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg"
+      >
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">Forgot Password</h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -66,11 +71,12 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className="text-red-500 text-center">{error}</div>}
-          {success && <div className="text-green-500 text-center">{success}</div>}
-          <div className="-space-y-px rounded-md shadow-sm">
+          {error && <div className="text-center text-red-500">{error}</div>}
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
               <input
                 id="email"
                 name="email"
@@ -78,25 +84,29 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${error ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
+                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${
+                  error ? 'border-red-500' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                 placeholder="Email address"
               />
-              {error && !success && (
+              {error && (
                 <p className="mt-2 text-sm text-red-600">{error}</p>
               )}
             </div>
           </div>
           <div>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               {isSubmitting ? 'Sending...' : 'Send Password Reset Link'}
-            </button>
+            </motion.button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

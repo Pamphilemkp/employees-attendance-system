@@ -1,19 +1,33 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose, { Schema, models } from "mongoose";
 
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },
-  password: String,
-  role: String,
-});
+const userSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true, // Ensure email is unique
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    employeeId: {
+      type: String,
+      required: true,
+      unique: true, // Ensure employee ID is unique
+    },
+    role: {
+      type: String,
+      enum: ['employee', 'admin'], // Define allowed roles
+      default: 'employee', // Set default role
+    },
+  },
+  { timestamps: true } // Automatically adds createdAt and updatedAt fields
+);
 
-userSchema.pre('save', function (next) {
-  if (!this.isModified('password')) return next();
-  
-  this.password = bcrypt.hashSync(this.password, 10); // Hash password before saving
-  next();
-});
-
-export default mongoose.models.User || mongoose.model('User', userSchema);
-
+const User = models.User || mongoose.model("User", userSchema);
+export default User;

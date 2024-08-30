@@ -1,142 +1,105 @@
 'use client';
 
-import { getProviders, signIn } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react'; // Add this line to import useState
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { useSession, getSession } from 'next-auth/react'; // Import getSession
 
 export default function SignInPage() {
-  const [providers, setProviders] = useState(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const { data: session } = useSession(); // useSession to manage session data
 
-  useEffect(() => {
-    const fetchProviders = async () => {
-      const res = await getProviders();
-      setProviders(res);
-    };
-    fetchProviders();
-  }, []);
-
-  const validateForm = () => {
-    const errors = {};
-    if (!email) {
-      errors.email = 'Email address is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Email address is invalid';
-    }
-
-    if (!password) {
-      errors.password = 'Password is required';
-    } else if (password.length < 6) {
-      errors.password = 'Password must be at least 6 characters long';
-    }
-
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    if (!validateForm()) {
-      setIsLoading(false);
-      return;
-    }
+    try {
+      const res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
 
-    const result = await signIn(providers?.credentials.id, {
-      redirect: false,
-      email,
-      password,
-      callbackUrl: '/',
-    });
+      if (res.error) {
+        setError('Invalid email or password');
+        return;
+      }
 
-    setIsLoading(false);
+      // Fetch the session after signing in to get user details
+      const currentSession = await getSession();
 
-    if (result?.error) {
-      setErrors({ general: 'Invalid email or password' });
-    } else {
-      // Redirecting will be handled by NextAuth
+      // Check the role and redirect accordingly
+      if (currentSession?.user?.role === 'admin') {
+        router.replace('/admin'); // Redirect to the admin dashboard if the user is an admin
+      } else {
+        router.replace('/attendance'); // Redirect to attendance page for normal employees
+      }
+    } catch (error) {
+      console.error('SignIn error:', error);
+      setError('An unexpected error occurred');
     }
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4 sm:p-6">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Sign in to your account</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Please enter your credentials to sign in.
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="-space-y-px rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100 sm:p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg"
+      >
+        <h2 className="mb-6 text-2xl font-semibold text-center text-gray-800">Sign In</h2>
+        {error && <p className="mb-4 text-center text-red-500">{error}</p>}
+        <form onSubmit={handleSignIn} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <label className="absolute inset-y-0 right-0 flex items-center pr-3">
               <input
-                id="email"
-                name="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-                placeholder="Email address"
+                type="checkbox"
+                checked={showPassword}
+                onChange={() => setShowPassword(!showPassword)}
               />
-              {errors.email && (
-                <p className="mt-2 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-                placeholder="Password"
-              />
-              {errors.password && (
-                <p className="mt-2 text-sm text-red-600">{errors.password}</p>
-              )}
-            </div>
+              <span className="ml-2 text-sm text-gray-600">Show</span>
+            </label>
           </div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-            <div className="text-sm">
-              <a href="/auth/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Forgot your password?
-              </a>
-            </div>
+            <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:underline">
+              Forgot Password?
+            </Link>
           </div>
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {isLoading ? 'Signing in...' : 'Sign in'}
-            </button>
-            {errors.general && (
-              <p className="mt-2 text-sm text-red-600">{errors.general}</p>
-            )}
-          </div>
+          <button
+            type="submit"
+            className="w-full p-3 text-white transition duration-300 bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            Sign In
+          </button>
         </form>
-      </div>
+        <p className="mt-6 text-sm text-center text-gray-600">
+          Don't have an account?{' '}
+          <Link href="/auth/signup" className="text-blue-600 hover:underline">
+            Sign Up
+          </Link>
+        </p>
+      </motion.div>
     </div>
   );
 }
+
