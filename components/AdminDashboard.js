@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,11 +21,12 @@ export default function AdminDashboard() {
   const [editingAttendance, setEditingAttendance] = useState(null);
   const [editedCheckIn, setEditedCheckIn] = useState('');
   const [editedCheckOut, setEditedCheckOut] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Default to current month
 
   useEffect(() => {
     fetchUsers();
     fetchAttendances();
-  }, []);
+  }, [selectedMonth]);
 
   const fetchUsers = async () => {
     try {
@@ -39,13 +41,21 @@ export default function AdminDashboard() {
 
   const fetchAttendances = async () => {
     try {
-      const res = await fetch('/api/admin/attendances');
+      const res = await fetch(`/api/admin/attendances?month=${selectedMonth}`);
       const data = await res.json();
       setAttendances(data);
     } catch (error) {
       console.error('Error fetching attendances:', error);
       toast.error('Failed to load attendance records.');
     }
+  };
+
+  const calculateHoursWorked = (checkIn, checkOut) => {
+    if (!checkOut) return 'N/A';
+    const diffMs = new Date(checkOut) - new Date(checkIn);
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
   };
 
   const handleInputChange = (e) => {
@@ -66,7 +76,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         toast.success('User created successfully!');
         setUserForm({ name: '', email: '', employeeId: '', role: 'employee', password: '' });
-        fetchUsers(); // Refresh users list
+        fetchUsers();
       } else {
         const { message } = await res.json();
         toast.error(message || 'Failed to create user.');
@@ -91,7 +101,7 @@ export default function AdminDashboard() {
         toast.success('User updated successfully!');
         setEditingUser(null);
         setUserForm({ name: '', email: '', employeeId: '', role: 'employee', password: '' });
-        fetchUsers(); // Refresh users list
+        fetchUsers();
       } else {
         const { message } = await res.json();
         toast.error(message || 'Failed to update user.');
@@ -110,7 +120,7 @@ export default function AdminDashboard() {
 
       if (res.ok) {
         toast.success('User deleted successfully!');
-        fetchUsers(); // Refresh users list
+        fetchUsers();
       } else {
         toast.error('Failed to delete user.');
       }
@@ -127,7 +137,7 @@ export default function AdminDashboard() {
       email: user.email,
       employeeId: user.employeeId,
       role: user.role,
-      password: '', // Leave empty for no change
+      password: '',
     });
   };
 
@@ -170,7 +180,7 @@ export default function AdminDashboard() {
       const data = await response.json();
       if (data.success) {
         setEditingAttendance(null);
-        fetchAttendances(); // Refresh data
+        fetchAttendances();
         toast.success('Attendance updated successfully!');
       } else {
         toast.error('Error updating attendance.');
@@ -206,14 +216,25 @@ export default function AdminDashboard() {
         {activeTab === 'attendance' && (
           <section>
             <h2 className="text-2xl font-semibold">Manage Attendance</h2>
+            <div className="my-4">
+              <label htmlFor="month-select" className="mr-2">Select Month:</label>
+              <input
+                type="month"
+                id="month-select"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="p-2 border rounded"
+              />
+            </div>
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-300">
                 <thead>
                   <tr className="bg-gray-200">
-                    <th className="px-4 py-3">Employee ID</th>
-                    <th className="px-4 py-3">Check-In</th>
-                    <th className="px-4 py-3">Check-Out</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-2 py-3 text-left">Employee ID</th>
+                    <th className="px-4 py-3 text-left">Check-In</th>
+                    <th className="px-4 py-3 text-left">Check-Out</th>
+                    <th className="px-4 py-3 text-left">Hours Worked</th>
+                    <th className="px-4 py-3 text-left">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,7 +248,7 @@ export default function AdminDashboard() {
                               type="datetime-local"
                               value={editedCheckIn}
                               onChange={(e) => setEditedCheckIn(e.target.value)}
-                              className="w-full p-2 border rounded"
+                              className="p-2 border rounded"
                             />
                           ) : (
                             formatDate(attendance.checkIn)
@@ -239,26 +260,27 @@ export default function AdminDashboard() {
                               type="datetime-local"
                               value={editedCheckOut}
                               onChange={(e) => setEditedCheckOut(e.target.value)}
-                              className="w-full p-2 border rounded"
+                              className="p-2 border rounded"
                             />
-                          ) : attendance.checkOut ? (
-                            formatDate(attendance.checkOut)
                           ) : (
-                            'N/A'
+                            attendance.checkOut ? formatDate(attendance.checkOut) : 'N/A'
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {calculateHoursWorked(attendance.checkIn, attendance.checkOut)}
                         </td>
                         <td className="px-4 py-3">
                           {editingAttendance === attendance._id ? (
                             <>
                               <button
                                 onClick={() => handleSaveAttendance(attendance._id)}
-                                className="p-2 mr-2 text-white bg-green-500 rounded"
+                                className="px-4 py-2 mr-2 text-white bg-green-500 rounded hover:bg-green-600"
                               >
                                 Save
                               </button>
                               <button
                                 onClick={() => setEditingAttendance(null)}
-                                className="p-2 text-white bg-gray-500 rounded"
+                                className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
                               >
                                 Cancel
                               </button>
@@ -266,7 +288,7 @@ export default function AdminDashboard() {
                           ) : (
                             <button
                               onClick={() => handleEditAttendance(attendance)}
-                              className="p-2 text-white bg-blue-500 rounded"
+                              className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
                             >
                               Edit
                             </button>
@@ -276,7 +298,7 @@ export default function AdminDashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-4 py-3 text-center">
+                      <td colSpan="5" className="p-4 text-center">
                         No attendance records found.
                       </td>
                     </tr>
@@ -290,73 +312,77 @@ export default function AdminDashboard() {
         {activeTab === 'users' && (
           <section>
             <h2 className="text-2xl font-semibold">Manage Users</h2>
-            <div className="my-4">
-              <input
-                type="text"
-                name="name"
-                value={userForm.name}
-                onChange={handleInputChange}
-                placeholder="Name"
-                className="p-2 mr-2 border rounded"
-              />
-              <input
-                type="email"
-                name="email"
-                value={userForm.email}
-                onChange={handleInputChange}
-                placeholder="Email"
-                className="p-2 mr-2 border rounded"
-              />
-              <input
-                type="text"
-                name="employeeId"
-                value={userForm.employeeId}
-                onChange={handleInputChange}
-                placeholder="Employee ID"
-                className="p-2 mr-2 border rounded"
-              />
-              <select
-                name="role"
-                value={userForm.role}
-                onChange={handleInputChange}
-                className="p-2 mr-2 border rounded"
-              >
-                <option value="employee">Employee</option>
-                <option value="admin">Admin</option>
-              </select>
-              <input
-                type="password"
-                name="password"
-                value={userForm.password}
-                onChange={handleInputChange}
-                placeholder="Password"
-                className="p-2 mr-2 border rounded"
-              />
+            <div className="mt-4">
+              <h3 className="text-xl font-semibold">Create User</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <input
+                  type="text"
+                  name="name"
+                  value={userForm.name}
+                  onChange={handleInputChange}
+                  placeholder="Name"
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="email"
+                  name="email"
+                  value={userForm.email}
+                  onChange={handleInputChange}
+                  placeholder="Email"
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="text"
+                  name="employeeId"
+                  value={userForm.employeeId}
+                  onChange={handleInputChange}
+                  placeholder="Employee ID"
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="password"
+                  name="password"
+                  value={userForm.password}
+                  onChange={handleInputChange}
+                  placeholder="Password"
+                  className="p-2 border rounded"
+                />
+                <select
+                  name="role"
+                  value={userForm.role}
+                  onChange={handleInputChange}
+                  className="p-2 border rounded"
+                >
+                  <option value="employee">Employee</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
               <button
                 onClick={editingUser ? handleUpdateUser : handleCreateUser}
-                className="p-2 text-white bg-green-500 rounded"
+                className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-blue-600"
               >
                 {editingUser ? 'Update User' : 'Create User'}
               </button>
               {editingUser && (
                 <button
                   onClick={handleCancelEdit}
-                  className="p-2 ml-2 text-white bg-gray-500 rounded"
+                  className="px-4 py-2 mt-4 ml-4 text-white bg-red-500 rounded hover:bg-red-600"
                 >
                   Cancel
                 </button>
               )}
             </div>
 
-            <div className="mt-4 overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-300">
+            <div className="mt-8 overflow-x-auto">
+              <h3 className="text-xl font-semibold">User List</h3>
+              <table className="min-w-full mt-4 bg-white border border-gray-300">
                 <thead>
                   <tr className="bg-gray-200">
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Employee ID</th>
-                    <th className="px-4 py-3">Role</th>
-                    <th className="px-4 py-3">Actions</th>
+                    <th className="px-4 py-3 text-left">Name</th>
+                    <th className="px-4 py-3 text-left">Email</th>
+                    <th className="px-4 py-3 text-left">Employee ID</th>
+                    <th className="px-4 py-3 text-left">Role</th>
+                    <th className="px-4 py-3 text-left">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,16 +393,16 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3">{user.email}</td>
                         <td className="px-4 py-3">{user.employeeId}</td>
                         <td className="px-4 py-3">{user.role}</td>
-                        <td className="flex items-center px-4 py-3">
+                        <td className="px-4 py-3">
                           <button
                             onClick={() => handleEditUser(user)}
-                            className="p-2 mr-2 text-white bg-blue-500 rounded"
+                            className="px-4 py-2 mr-2 text-white bg-blue-500 rounded hover:bg-blue-600"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user._id)}
-                            className="p-2 text-white bg-red-500 rounded"
+                            className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
                           >
                             Delete
                           </button>
@@ -385,7 +411,7 @@ export default function AdminDashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="5" className="px-4 py-3 text-center">
+                      <td colSpan="5" className="p-4 text-center">
                         No users found.
                       </td>
                     </tr>

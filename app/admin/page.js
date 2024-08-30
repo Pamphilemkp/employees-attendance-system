@@ -2,12 +2,14 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AdminDashboard from '../../components/AdminDashboard';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // Default to current month
 
   useEffect(() => {
     console.log("Session data:", session); // Debugging: Log the session data
@@ -26,5 +28,7 @@ export default function AdminPage() {
     return <div>Loading...</div>; // Show a loading state or redirect
   }
 
-  return <AdminDashboard />;
+  return (
+    <AdminDashboard selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
+  );
 }
