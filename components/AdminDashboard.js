@@ -385,7 +385,7 @@ export default function AdminDashboard() {
                 value={userForm.name}
                 onChange={handleInputChange}
                 placeholder="Name"
-                className="p-2 mr-2 border rounded"
+                className="p-2 mt-4 mr-2 border rounded"
               />
               <input
                 type="email"
@@ -393,7 +393,7 @@ export default function AdminDashboard() {
                 value={userForm.email}
                 onChange={handleInputChange}
                 placeholder="Email"
-                className="p-2 mr-2 border rounded"
+                className="p-2 mt-4 mr-2 border rounded"
               />
               <input
                 type="text"
@@ -401,13 +401,13 @@ export default function AdminDashboard() {
                 value={userForm.employeeId}
                 onChange={handleInputChange}
                 placeholder="Employee ID"
-                className="p-2 mr-2 border rounded"
+                className="p-2 mt-4 mr-2 border rounded"
               />
               <select
                 name="role"
                 value={userForm.role}
                 onChange={handleInputChange}
-                className="p-2 mr-2 border rounded"
+                className="p-2 mt-4 mr-2 border rounded"
               >
                 <option value="employee">Employee</option>
                 <option value="admin">Admin</option>
@@ -418,11 +418,11 @@ export default function AdminDashboard() {
                 value={userForm.password}
                 onChange={handleInputChange}
                 placeholder="Password"
-                className="p-2 mr-2 border rounded"
+                className="p-2 mt-4 mr-2 border rounded"
               />
               <button
                 onClick={editingUser ? handleUpdateUser : handleCreateUser}
-                className="p-2 text-white bg-green-500 rounded"
+                className="p-2 mt-4 text-white bg-green-500 rounded"
               >
                 {editingUser ? 'Update User' : 'Create User'}
               </button>
