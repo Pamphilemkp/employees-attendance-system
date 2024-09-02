@@ -3,11 +3,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
   const [users, setUsers] = useState([]);
+  const [attendances, setAttendances] = useState([]);
+  const [filteredAttendances, setFilteredAttendances] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
+  const [editingAttendance, setEditingAttendance] = useState(null);
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
@@ -15,16 +20,20 @@ export default function AdminDashboard() {
     role: 'employee',
     password: '',
   });
-
-  const [attendances, setAttendances] = useState([]);
-  const [editingAttendance, setEditingAttendance] = useState(null);
   const [editedCheckIn, setEditedCheckIn] = useState('');
   const [editedCheckOut, setEditedCheckOut] = useState('');
+  const [month, setMonth] = useState(new Date());
+  const [selectedUser, setSelectedUser] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
     fetchUsers();
     fetchAttendances();
   }, []);
+
+  useEffect(() => {
+    filterAttendances();
+  }, [month, selectedUser, sortOrder]);
 
   const fetchUsers = async () => {
     try {
@@ -42,10 +51,42 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/attendances');
       const data = await res.json();
       setAttendances(data);
+      setFilteredAttendances(data); // Initialize filtered attendances
     } catch (error) {
       console.error('Error fetching attendances:', error);
       toast.error('Failed to load attendance records.');
     }
+  };
+
+  const filterAttendances = () => {
+    let filtered = [...attendances];
+
+    // Filter by selected month
+    if (month) {
+      const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+      const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      filtered = filtered.filter(
+        (attendance) =>
+          new Date(attendance.checkIn) >= startOfMonth &&
+          new Date(attendance.checkIn) <= endOfMonth
+      );
+    }
+
+    // Filter by selected user
+    if (selectedUser) {
+      filtered = filtered.filter((attendance) => attendance.employeeId === selectedUser);
+    }
+
+    // Sort by user name
+    filtered.sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return a.employeeId.localeCompare(b.employeeId);
+      } else {
+        return b.employeeId.localeCompare(a.employeeId);
+      }
+    });
+
+    setFilteredAttendances(filtered);
   };
 
   const handleInputChange = (e) => {
@@ -147,6 +188,14 @@ export default function AdminDashboard() {
     }).format(new Date(date));
   };
 
+  const calculateHoursWorked = (checkIn, checkOut) => {
+    if (!checkOut) return 'N/A';
+    const diff = new Date(checkOut) - new Date(checkIn);
+    const hours = Math.floor(diff / 1000 / 60 / 60);
+    const minutes = Math.floor((diff / 1000 / 60) % 60);
+    return `${hours} hrs ${minutes} mins`;
+  };
+
   const handleEditAttendance = (attendance) => {
     setEditingAttendance(attendance._id);
     setEditedCheckIn(new Date(attendance.checkIn).toISOString().slice(0, 16));
@@ -181,31 +230,84 @@ export default function AdminDashboard() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gray-100"
+    >
       <Toaster />
-      <header className="p-4 text-center text-white bg-blue-700">
+      <motion.header
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="p-4 text-center text-white bg-blue-700"
+      >
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <div className="mt-4">
+        <div className="flex justify-center mt-4 space-x-2">
           <button
             onClick={() => setActiveTab('attendance')}
-            className={`p-2 mx-2 ${activeTab === 'attendance' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
+            className={`p-2 ${activeTab === 'attendance' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
           >
             Manage Attendance
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`p-2 mx-2 ${activeTab === 'users' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
+            className={`p-2 ${activeTab === 'users' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
           >
             Manage Users
           </button>
         </div>
-      </header>
+      </motion.header>
 
-      <main className="p-4">
+      <motion.main
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="p-4"
+      >
         {activeTab === 'attendance' && (
           <section>
             <h2 className="text-2xl font-semibold">Manage Attendance</h2>
+            <div className="flex flex-col items-center justify-between mt-4 md:flex-row">
+              <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-4">
+                <DatePicker
+                  selected={month}
+                  onChange={(date) => setMonth(date)}
+                  dateFormat="MMMM yyyy"
+                  showMonthYearPicker
+                  className="p-2 border rounded"
+                />
+                <select
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="p-2 border rounded"
+                >
+                  <option value="">All Users</option>
+                  {users.map(user => (
+                    <option key={user._id} value={user.employeeId}>{user.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 text-white bg-blue-500 rounded"
+                >
+                  Sort by Name ({sortOrder === 'asc' ? 'A-Z' : 'Z-A'})
+                </button>
+              </div>
+              <button
+                onClick={handlePrint}
+                className="p-2 text-white bg-green-500 rounded"
+              >
+                Print Current Month
+              </button>
+            </div>
+
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full bg-white border border-gray-300">
                 <thead>
@@ -213,12 +315,13 @@ export default function AdminDashboard() {
                     <th className="px-4 py-3">Employee ID</th>
                     <th className="px-4 py-3">Check-In</th>
                     <th className="px-4 py-3">Check-Out</th>
+                    <th className="px-4 py-3">Hours Worked</th>
                     <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {attendances.length > 0 ? (
-                    attendances.map((attendance) => (
+                  {filteredAttendances.length > 0 ? (
+                    filteredAttendances.map((attendance) => (
                       <tr key={attendance._id}>
                         <td className="px-4 py-3">{attendance.employeeId}</td>
                         <td className="px-4 py-3">
@@ -246,6 +349,9 @@ export default function AdminDashboard() {
                           ) : (
                             'N/A'
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {calculateHoursWorked(attendance.checkIn, attendance.checkOut)}
                         </td>
                         <td className="px-4 py-3">
                           {editingAttendance === attendance._id ? (
@@ -276,7 +382,7 @@ export default function AdminDashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-4 py-3 text-center">
+                      <td colSpan="5" className="px-4 py-3 text-center">
                         No attendance records found.
                       </td>
                     </tr>
@@ -395,7 +501,7 @@ export default function AdminDashboard() {
             </div>
           </section>
         )}
-      </main>
-    </div>
+      </motion.main>
+    </motion.div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import {dbConnect} from '../../../../lib/dbConnect';
+import { dbConnect } from '../../../../lib/dbConnect';
 import Attendance from '../../../../models/Attendance';
 
 export async function POST(request) {
@@ -13,6 +13,11 @@ export async function POST(request) {
 
   attendance.checkIn = checkIn;
   attendance.checkOut = checkOut;
+
+  if (checkIn && checkOut) {
+    const duration = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60); // Duration in hours
+    attendance.duration = duration;
+  }
 
   await attendance.save();
   return NextResponse.json({ success: true, message: 'Attendance updated successfully!' });

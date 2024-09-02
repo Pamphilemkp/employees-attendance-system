@@ -21,6 +21,7 @@
     "next-auth": "^4.24.7",
     "nodemailer": "^6.9.14",
     "react": "^18",
+    "react-datepicker": "^7.3.0",
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1"
   },
