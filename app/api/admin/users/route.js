@@ -1,29 +1,27 @@
 import { NextResponse } from 'next/server';
 import { dbConnect } from '../../../../lib/dbConnect';
-import Attendance from '../../../../models/Attendance';
-
-export async function GET(request) {
+import User from '../../../../models/User';
+import bcrypt from 'bcryptjs';
+export async function GET() {
   await dbConnect();
+  const users = await User.find({});
+  return NextResponse.json(users);
+}
 
-  const { searchParams } = new URL(request.url);
-  const month = searchParams.get('month');
-  const employeeId = searchParams.get('employeeId');
 
-  const query = {};
+export async function POST(request) {
+  await dbConnect();
+  const { name, email, employeeId, role, password } = await request.json();
 
-  if (month) {
-    const startOfMonth = new Date(`${month}-01`);
-    const endOfMonth = new Date(`${month}-01`);
-    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-
-    query.checkIn = { $gte: startOfMonth, $lt: endOfMonth };
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return NextResponse.json({ success: false, message: 'Email already exists' });
   }
 
-  if (employeeId) {
-    query.employeeId = employeeId;
-  }
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  const attendances = await Attendance.find(query).sort({ employeeId: 1 });
+  const user = new User({ name, email, employeeId, role, password: hashedPassword });
+  await user.save();
 
-  return NextResponse.json(attendances);
+  return NextResponse.json({ success: true, message: 'User created successfully', user });
 }

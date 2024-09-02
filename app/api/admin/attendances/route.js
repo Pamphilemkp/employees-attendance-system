@@ -4,11 +4,11 @@ import Attendance from '../../../../models/Attendance';
 
 export async function GET(request) {
   await dbConnect();
-  
+
   const { searchParams } = new URL(request.url);
   const month = searchParams.get('month');
-  const userId = searchParams.get('userId');
-  
+  const employeeId = searchParams.get('employeeId');
+
   const query = {};
 
   if (month) {
@@ -19,11 +19,14 @@ export async function GET(request) {
     query.checkIn = { $gte: startOfMonth, $lt: endOfMonth };
   }
 
-  if (userId) {
-    query.employeeId = userId;
+  if (employeeId) {
+    query.employeeId = employeeId;
   }
 
-  const attendances = await Attendance.find(query);
-
-  return NextResponse.json(attendances);
+  try {
+    const attendances = await Attendance.find(query).sort({ employeeId: 1 });
+    return NextResponse.json(attendances);
+  } catch (error) {
+    return NextResponse.json({ error: 'Error fetching attendance data' }, { status: 500 });
+  }
 }

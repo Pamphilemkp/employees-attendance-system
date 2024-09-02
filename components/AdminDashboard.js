@@ -28,11 +28,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchUsers();
-    fetchAttendances();
+    fetchFilteredAttendances(); // Call the fetch function when the component mounts
   }, []);
 
   useEffect(() => {
-    filterAttendances();
+    fetchFilteredAttendances(); // Re-fetch attendances when filters change
   }, [month, selectedUser, sortOrder]);
 
   const fetchUsers = async () => {
@@ -46,47 +46,29 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchAttendances = async () => {
+  const fetchFilteredAttendances = async () => {
     try {
-      const res = await fetch('/api/admin/attendances');
+      const queryParams = new URLSearchParams();
+      if (month) {
+        const formattedMonth = month.toISOString().slice(0, 7); // format as YYYY-MM
+        queryParams.append('month', formattedMonth);
+      }
+      if (selectedUser) {
+        queryParams.append('employeeId', selectedUser);
+      }
+
+      const res = await fetch(`/api/admin/attendances?${queryParams.toString()}`);
       const data = await res.json();
-      setAttendances(data);
-      setFilteredAttendances(data); // Initialize filtered attendances
+
+      if (res.ok) {
+        setFilteredAttendances(data);
+      } else {
+        toast.error('Failed to load filtered attendance records.');
+      }
     } catch (error) {
-      console.error('Error fetching attendances:', error);
+      console.error('Error fetching filtered attendances:', error);
       toast.error('Failed to load attendance records.');
     }
-  };
-
-  const filterAttendances = () => {
-    let filtered = [...attendances];
-
-    // Filter by selected month
-    if (month) {
-      const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-      const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-      filtered = filtered.filter(
-        (attendance) =>
-          new Date(attendance.checkIn) >= startOfMonth &&
-          new Date(attendance.checkIn) <= endOfMonth
-      );
-    }
-
-    // Filter by selected user
-    if (selectedUser) {
-      filtered = filtered.filter((attendance) => attendance.employeeId === selectedUser);
-    }
-
-    // Sort by user name
-    filtered.sort((a, b) => {
-      if (sortOrder === 'asc') {
-        return a.employeeId.localeCompare(b.employeeId);
-      } else {
-        return b.employeeId.localeCompare(a.employeeId);
-      }
-    });
-
-    setFilteredAttendances(filtered);
   };
 
   const handleInputChange = (e) => {
@@ -219,7 +201,7 @@ export default function AdminDashboard() {
       const data = await response.json();
       if (data.success) {
         setEditingAttendance(null);
-        fetchAttendances(); // Refresh data
+        fetchFilteredAttendances(); // Refresh data
         toast.success('Attendance updated successfully!');
       } else {
         toast.error('Error updating attendance.');
