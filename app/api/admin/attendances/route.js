@@ -11,6 +11,7 @@ export async function GET(request) {
 
   const query = {};
 
+  // Filter by month
   if (month) {
     const startOfMonth = new Date(`${month}-01`);
     const endOfMonth = new Date(`${month}-01`);
@@ -19,14 +20,20 @@ export async function GET(request) {
     query.checkIn = { $gte: startOfMonth, $lt: endOfMonth };
   }
 
+  // Filter by employeeId if provided
   if (employeeId) {
-    query.employeeId = employeeId;
+    query.employeeId = employeeId; // Directly matching employeeId from Attendance
   }
 
   try {
+    // Fetch attendance records with employeeId directly from Attendance collection
     const attendances = await Attendance.find(query).sort({ employeeId: 1 });
+
+    console.log('Attendance Records:', attendances); // Debugging
     return NextResponse.json(attendances);
   } catch (error) {
+    console.error('Error fetching attendance data:', error);
     return NextResponse.json({ error: 'Error fetching attendance data' }, { status: 500 });
   }
 }
+

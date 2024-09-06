@@ -6,15 +6,13 @@ export async function POST(request) {
   const { employeeId } = await request.json();
   await dbConnect();
 
-  // Find the employee's attendance record for today
   const attendance = await Attendance.findOne({ employeeId, status: 'CheckedIn' });
   if (!attendance) {
     return NextResponse.json({ success: false, message: 'No active check-in found.' });
   }
 
-  attendance.checkOut = new Date();
-  attendance.status = 'CheckedOut';
-  
+  attendance.shortBreakIn = new Date();
   await attendance.save();
-  return NextResponse.json({ success: true, message: 'Checked out successfully.' });
+
+  return NextResponse.json({ success: true, message: 'Short break started successfully.' });
 }
