@@ -207,11 +207,11 @@ export default function UserManagement() {
       <table className="min-w-full bg-white border border-gray-300">
         <thead>
           <tr className="bg-gray-200">
-            <th className="px-4 py-3">Name</th>
-            <th className="px-4 py-3">Email</th>
-            <th className="px-4 py-3">Employee ID</th>
-            <th className="px-4 py-3">Role</th>
-            <th className="px-4 py-3">Actions</th>
+            <th className="px-4 py-3 text-left">Name</th>
+            <th className="px-4 py-3 text-left">Email</th>
+            <th className="px-4 py-3 text-left">Employee ID</th>
+            <th className="px-4 py-3 text-left">Role</th>
+            <th className="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>

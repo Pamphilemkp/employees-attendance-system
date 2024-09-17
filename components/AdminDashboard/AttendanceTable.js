@@ -66,13 +66,13 @@ export default function AttendanceTable({ attendances = [] }) {
       <table className="min-w-full bg-white border border-gray-300 rounded-lg">
         <thead>
           <tr className="text-sm leading-normal text-gray-600 uppercase bg-gray-200">
-            <th className="px-4 py-3">Employee ID</th>
-            <th className="px-4 py-3">Check-In</th>
-            <th className="px-4 py-3">Check-Out</th>
-            <th className="px-4 py-3">Short Break In</th>
-            <th className="px-4 py-3">Short Break Out</th>
-            <th className="px-4 py-3">Hours Worked</th>
-            <th className="px-4 py-3">Actions</th>
+            <th className="pl-4 py-3 text-left">Employee ID</th>
+            <th className="pl-4 py-3 text-left">Check-In</th>
+            <th className="pl-4 py-3 text-left">Check-Out</th>
+            <th className="pl-4 py-3 text-left">Short Break In</th>
+            <th className="pl-4 py-3 text-left">Short Break Out</th>
+            <th className="pl-4 py-3 text-left">Hours Worked</th>
+            <th className="pl-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
