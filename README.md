@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Attendance System Documentation
 
-## Getting Started
+### Overview
 
-First, run the development server:
+This Attendance System allows employees to check in and check out by simply entering their employee ID. The system automatically records the current time for both check-in and check-out. Only the admin has the capability to manage, edit, and view all attendance records.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Employee Attendance**: Employees can check in and check out by entering their employee ID. No sign-in is required for this.
+- **Admin Dashboard**: The admin can view, edit, and manage all attendance records.
+- **Time Tracking**: The system automatically calculates the time worked, including hours, minutes, and seconds.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- **Node.js** (v14 or later)
+- **MongoDB**: Ensure you have a MongoDB instance running, either locally or via a cloud service like MongoDB Atlas.
+- **Next.js** (App Router)
+- **Tailwind CSS** for styling
 
-## Learn More
+### Setup and Installation
 
-To learn more about Next.js, take a look at the following resources:
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd attendance-system
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+3. **Configure Environment Variables**:
+   Create a `.env.local` file in the root directory and add the following environment variables:
+   ```bash
+   MONGODB_URI=your_mongodb_uri_here
+   NEXTAUTH_SECRET=your_secret_here
+   ```
 
-## Deploy on Vercel
+4. **Run the Development Server**:
+   ```bash
+   npm run dev
+   ```
+   The application will start at `http://localhost:3000`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+#### 1. **Employee Attendance**
+
+Employees can mark their attendance by navigating to the `/attendance` page:
+
+- **Check-In**: Enter your Employee ID and click the "Check In" button. The system records the current date and time as your check-in time.
+- **Check-Out**: Enter your Employee ID again and click the "Check Out" button. The system records the current date and time as your check-out time.
+
+#### 2. **Admin Dashboard**
+
+Admins can manage attendance records by navigating to the `/admin` page:
+
+- **View Records**: See all employees' attendance records, including check-in and check-out times.
+- **Edit Records**: Click the "Edit" button next to any record to modify the check-in or check-out time. You can adjust the times using a datetime picker and save the changes.
+- **Time Worked**: The system automatically calculates the total time worked by an employee based on their check-in and check-out times.
+
+### API Routes
+
+- **Check-In**: `POST /api/attendance/checkin`
+  - **Request Body**: `{ "employeeId": "12345" }`
+  - **Response**: `{ "success": true, "message": "Check-in successful!" }`
+  
+- **Check-Out**: `POST /api/attendance/checkout`
+  - **Request Body**: `{ "employeeId": "12345" }`
+  - **Response**: `{ "success": true, "message": "Check-out successful!" }`
+  
+- **Update Attendance**: `POST /api/attendance/update`
+  - **Request Body**: `{ "id": "attendance_id", "checkIn": "2023-01-01T08:00:00Z", "checkOut": "2023-01-01T17:00:00Z" }`
+  - **Response**: `{ "success": true, "message": "Attendance updated successfully!" }`
+
+### Deployment
+
+You can deploy this application to any platform that supports Node.js, such as Vercel:
+
+1. **Deploy to Vercel**:
+   - Connect your GitHub repository to Vercel.
+   - Set up your environment variables (`MONGODB_URI` and `NEXTAUTH_SECRET`) in the Vercel dashboard.
+   - Deploy the application.
+
+### Conclusion
+
+This Attendance System is designed to be simple yet powerful, enabling seamless attendance management. Employees can easily check in and out without needing to log in, while the admin can manage the records efficiently.
