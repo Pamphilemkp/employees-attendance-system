@@ -25,6 +25,7 @@ const userSchema = new Schema(
       enum: ['employee', 'admin'], // Define allowed roles
       default: 'employee', // Set default role
     },
+    qrCode: { type: String },
   },
   { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );

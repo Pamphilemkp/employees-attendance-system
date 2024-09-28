@@ -55,6 +55,40 @@ export default function AttendanceTable({ attendances = [] }) {
     setEditingAttendanceId(null); // Reset editing state
   };
 
+  // Handle generating and opening QR Code in a new tab
+  const handleGenerateQRCode = async (employeeId) => {
+    try {
+      const res = await fetch(`/api/admin/generate-qr?employeeId=${employeeId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>QR Code for Employee ${employeeId}</title>
+              <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h2 { margin-bottom: 20px; }
+              </style>
+            </head>
+            <body>
+              <h2>QR Code for Employee ID: ${employeeId}</h2>
+              <img src="${data.qrCode}" alt="QR Code" />
+              <script>window.print();</script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } else {
+        toast.error('Failed to generate QR code');
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast.error('Failed to generate QR code');
+    }
+  };
+
   // Format date to "Month Day, Year" (e.g., "August 15, 2024")
   const formatDate = (date) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -66,13 +100,13 @@ export default function AttendanceTable({ attendances = [] }) {
       <table className="min-w-full bg-white border border-gray-300 rounded-lg">
         <thead>
           <tr className="text-sm leading-normal text-gray-600 uppercase bg-gray-200">
-            <th className="pl-4 py-3 text-left">Employee ID</th>
-            <th className="pl-4 py-3 text-left">Check-In</th>
-            <th className="pl-4 py-3 text-left">Check-Out</th>
-            <th className="pl-4 py-3 text-left">Short Break In</th>
-            <th className="pl-4 py-3 text-left">Short Break Out</th>
-            <th className="pl-4 py-3 text-left">Hours Worked</th>
-            <th className="pl-4 py-3 text-left">Actions</th>
+            <th className="py-3 pl-4 text-left">Employee ID</th>
+            <th className="py-3 pl-4 text-left">Check-In</th>
+            <th className="py-3 pl-4 text-left">Check-Out</th>
+            <th className="py-3 pl-4 text-left">Short Break In</th>
+            <th className="py-3 pl-4 text-left">Short Break Out</th>
+            <th className="py-3 pl-4 text-left">Hours Worked</th>
+            <th className="py-3 pl-4 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -95,12 +129,20 @@ export default function AttendanceTable({ attendances = [] }) {
                       />
                     </>
                   ) : (
-                    <button
-                      onClick={() => handleEditClick(attendance._id)}
-                      className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditClick(attendance._id)}
+                        className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleGenerateQRCode(attendance.employeeId)}
+                        className="px-3 py-1 text-white bg-green-500 rounded-md hover:bg-green-600"
+                      >
+                        Generate QR
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>

@@ -135,6 +135,13 @@ export default function HomePage() {
               Mark Attendance
             </p>
           </Link>
+
+          {/* New Button to Navigate to QR Scanner Page */}
+          <Link href="/scan-qr">
+            <p className="w-full max-w-xs p-3 text-center text-white bg-blue-500 rounded-lg shadow-md hover:bg-blue-600">
+              Scan QR Code
+            </p>
+          </Link>
         </motion.div>
       </main>
 
