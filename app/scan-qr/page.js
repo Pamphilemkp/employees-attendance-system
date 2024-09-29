@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect, useRef } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { toast } from 'react-hot-toast';
@@ -6,31 +6,48 @@ import { toast } from 'react-hot-toast';
 export default function ScanQR() {
   const [scanResult, setScanResult] = useState('');
   const [isScanning, setIsScanning] = useState(true);
+  const [devices, setDevices] = useState([]); // Store available cameras
+  const [selectedDeviceId, setSelectedDeviceId] = useState(''); // Store selected camera ID
   const videoRef = useRef(null);
   const codeReaderRef = useRef(null); // to hold the code reader instance
 
+  // Get available video input devices
   useEffect(() => {
-    if (isScanning) {
+    navigator.mediaDevices.enumerateDevices().then((deviceInfos) => {
+      const videoDevices = deviceInfos.filter((device) => device.kind === 'videoinput');
+      setDevices(videoDevices);
+      if (videoDevices.length > 0) {
+        setSelectedDeviceId(videoDevices[0].deviceId); // Default to the first camera
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isScanning && selectedDeviceId) {
       const codeReader = new BrowserMultiFormatReader();
       codeReaderRef.current = codeReader; // store the codeReader instance
 
-      codeReader.decodeFromVideoDevice(null, videoRef.current, async (result, err) => {
-        if (result) {
-          const employeeId = result.getText();
-          setScanResult(employeeId);
-          setIsScanning(false); // Stop scanning after result
-          toast.success('QR Code Scanned!');
+      codeReader.decodeFromVideoDevice(
+        selectedDeviceId,
+        videoRef.current,
+        async (result, err) => {
+          if (result) {
+            const employeeId = result.getText();
+            setScanResult(employeeId);
+            setIsScanning(false); // Stop scanning after result
+            toast.success('QR Code Scanned!');
 
-          // Trigger check-in/check-out API call
-          await handleCheckInOrCheckOut(employeeId);
+            // Trigger check-in/check-out API call
+            await handleCheckInOrCheckOut(employeeId);
+          }
+          if (err) {
+            console.error(err); // Log errors, if any occur
+          }
         }
-        if (err) {
-          console.error(err); // Log errors, if any occur
-        }
-      });
+      );
 
       return () => {
-        // Check if videoRef.current is defined before accessing its properties
+        // Stop the video stream when the component is unmounted or scanning is stopped
         if (videoRef.current) {
           const stream = videoRef.current.srcObject;
           if (stream) {
@@ -40,7 +57,7 @@ export default function ScanQR() {
         }
       };
     }
-  }, [isScanning]);
+  }, [isScanning, selectedDeviceId]); // Re-run effect when scanning or selectedDeviceId changes
 
   // Function to handle check-in/check-out based on the scanned employee ID
   const handleCheckInOrCheckOut = async (employeeId) => {
@@ -69,6 +86,23 @@ export default function ScanQR() {
       <div className="w-full max-w-md">
         <h1 className="mb-6 text-3xl font-bold text-center">Scan QR Code</h1>
 
+        {/* Dropdown to select camera */}
+        <div className="mb-4">
+          <label htmlFor="cameraSelect" className="block mb-2 text-sm font-bold">Select Camera:</label>
+          <select
+            id="cameraSelect"
+            onChange={(e) => setSelectedDeviceId(e.target.value)}
+            value={selectedDeviceId}
+            className="w-full p-2 border rounded"
+          >
+            {devices.map((device, index) => (
+              <option key={device.deviceId} value={device.deviceId}>
+                {device.label || `Camera ${index + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="video-container">
           {isScanning && <video ref={videoRef} style={{ width: '100%' }} />}
         </div>
@@ -91,4 +125,4 @@ export default function ScanQR() {
       </div>
     </div>
   );
-}
+};
