@@ -142,6 +142,15 @@ export default function HomePage() {
               Scan QR Code
             </p>
           </Link>
+
+          {/* Conditionally Render the Admin Panel Button */}
+          {session && session.user.role === 'admin' && (
+            <Link href="/admin">
+              <p className="w-full max-w-xs p-3 text-center text-white bg-yellow-500 rounded-lg shadow-md hover:bg-yellow-600">
+                Admin Panel
+              </p>
+            </Link>
+          )}
         </motion.div>
       </main>
 

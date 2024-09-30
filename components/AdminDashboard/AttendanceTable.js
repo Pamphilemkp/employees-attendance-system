@@ -3,14 +3,14 @@ import AttendanceForm from './AttendanceForm';
 import { toast } from 'react-hot-toast';
 
 export default function AttendanceTable({ attendances = [] }) {
-  const [editingAttendanceId, setEditingAttendanceId] = useState(null); // Track the attendance being edited
-  const [attendancesList, setAttendancesList] = useState([]); // Local state for attendance list
+  const [editingAttendanceId, setEditingAttendanceId] = useState(null);
+  const [attendancesList, setAttendancesList] = useState([]);
+  const [loading, setLoading] = useState(false); // Global loader state
+  const [loadingQR, setLoadingQR] = useState(false); // Loader state for QR generation
 
   useEffect(() => {
-    // Log the initial attendance data for debugging
     console.log('Received attendances:', attendances);
 
-    // Check if attendances is a valid array and update the state
     if (Array.isArray(attendances)) {
       setAttendancesList(attendances);
     } else {
@@ -18,13 +18,12 @@ export default function AttendanceTable({ attendances = [] }) {
     }
   }, [attendances]);
 
-  // Handle the edit button click
   const handleEditClick = (attendanceId) => {
     setEditingAttendanceId(attendanceId);
   };
 
-  // Handle save logic with toast notifications
   const handleSaveAttendance = async (updatedAttendance) => {
+    setLoading(true); // Show loader
     try {
       const response = await fetch(`/api/admin/attendances/${updatedAttendance._id}`, {
         method: 'PUT',
@@ -36,27 +35,27 @@ export default function AttendanceTable({ attendances = [] }) {
 
       if (response.ok) {
         toast.success('Attendance updated successfully!');
-        // Update the local list with the edited attendance
         setAttendancesList(
           attendancesList.map((item) => (item._id === updatedAttendance._id ? updatedAttendance : item))
         );
-        setEditingAttendanceId(null); // Reset editing state
+        setEditingAttendanceId(null);
       } else {
         toast.error('Failed to update attendance');
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
       toast.error('Error updating attendance');
+    } finally {
+      setLoading(false); // Hide loader
     }
   };
 
-  // Handle cancel logic
   const handleCancelEdit = () => {
-    setEditingAttendanceId(null); // Reset editing state
+    setEditingAttendanceId(null);
   };
 
-  // Handle generating and opening QR Code in a new tab
   const handleGenerateQRCode = async (employeeId) => {
+    setLoadingQR(true); // Show QR loader
     try {
       const res = await fetch(`/api/admin/generate-qr?employeeId=${employeeId}`);
       const data = await res.json();
@@ -86,10 +85,11 @@ export default function AttendanceTable({ attendances = [] }) {
     } catch (error) {
       console.error('Error generating QR code:', error);
       toast.error('Failed to generate QR code');
+    } finally {
+      setLoadingQR(false); // Hide QR loader
     }
   };
 
-  // Format date to "Month Day, Year" (e.g., "August 15, 2024")
   const formatDate = (date) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(date).toLocaleDateString(undefined, options);
@@ -140,7 +140,7 @@ export default function AttendanceTable({ attendances = [] }) {
                         onClick={() => handleGenerateQRCode(attendance.employeeId)}
                         className="px-3 py-1 text-white bg-green-500 rounded-md hover:bg-green-600"
                       >
-                        Generate QR
+                        {loadingQR ? <div className="spinner"></div> : 'Generate QR'}
                       </button>
                     </div>
                   )}
@@ -156,6 +156,45 @@ export default function AttendanceTable({ attendances = [] }) {
           )}
         </tbody>
       </table>
+
+      {loading && ( // Show global loader when saving attendance
+        <div className="loader-backdrop">
+          <div className="spinner"></div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .spinner {
+          width: 25px;
+          height: 25px;
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        .loader-backdrop {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(255, 255, 255, 0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

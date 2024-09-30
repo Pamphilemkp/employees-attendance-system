@@ -1,22 +1,24 @@
 'use client';
 
-import { useState } from 'react'; // Add this line to import useState
+import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useSession, getSession } from 'next-auth/react'; // Import getSession
+import { useSession, getSession } from 'next-auth/react';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // New state for loading
   const router = useRouter();
-  const { data: session } = useSession(); // useSession to manage session data
+  const { data: session } = useSession();
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true when sign-in starts
 
     try {
       const res = await signIn('credentials', {
@@ -27,23 +29,25 @@ export default function SignInPage() {
 
       if (res.error) {
         setError('Invalid email or password');
+        setLoading(false); // Stop loading on error
         return;
       }
 
-      // Fetch the session after signing in to get user details
       const currentSession = await getSession();
 
-      // Check the role and redirect accordingly
       if (currentSession?.user?.role === 'admin') {
-        router.replace('/admin'); // Redirect to the admin dashboard if the user is an admin
+        router.replace('/admin');
       } else {
-        router.replace('/attendance'); // Redirect to attendance page for normal employees
+        router.replace('/attendance');
       }
     } catch (error) {
       console.error('SignIn error:', error);
       setError('An unexpected error occurred');
+    } finally {
+      setLoading(false); // Stop loading after sign-in attempt
     }
   };
+
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100 sm:p-6">
       <motion.div 
@@ -85,13 +89,21 @@ export default function SignInPage() {
               Forgot Password?
             </Link>
           </div>
-          <button
-            type="submit"
-            className="w-full p-3 text-white transition duration-300 bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            Sign In
-          </button>
+          
+          {loading ? (
+            <div className="flex justify-center">
+              <div className="spinner"></div> {/* Updated spinner */}
+            </div>
+          ) : (
+            <button
+              type="submit"
+              className="w-full p-3 text-white transition duration-300 bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              Sign In
+            </button>
+          )}
         </form>
+
         <p className="mt-6 text-sm text-center text-gray-600">
           Don't have an account?{' '}
           <Link href="/auth/signup" className="text-blue-600 hover:underline">
@@ -99,7 +111,27 @@ export default function SignInPage() {
           </Link>
         </p>
       </motion.div>
+
+      {/* Styles for the spinner */}
+      <style jsx>{`
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }
-

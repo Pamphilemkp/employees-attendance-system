@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import AdminDashboard from '../../components/AdminDashboard/AdminDashboard';
+import ClipLoader from 'react-spinners/ClipLoader'; // Import the spinner
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -22,9 +23,15 @@ export default function AdminPage() {
     }
   }, [session, status, router]);
 
+  // Show the loader if the page is loading or session is not yet verified
   if (status === 'loading' || !session || session.user.role !== 'admin') {
-    return <div>Loading...</div>; // Show a loading state or redirect
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <ClipLoader size={150} color={"#123abc"} loading={true} />
+      </div>
+    );
   }
 
+  // Render the admin dashboard if the user is authenticated and is an admin
   return <AdminDashboard />;
 }
