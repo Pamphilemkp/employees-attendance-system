@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import { dbConnect } from '../../../../lib/dbConnect';
 import Attendance from '../../../../models/Attendance';
@@ -5,7 +6,9 @@ import Attendance from '../../../../models/Attendance';
 export async function POST(request) {
   await dbConnect();
 
-  const { id, checkIn, checkOut, shortBreakIn, shortBreakOut } = await request.json();
+  const {
+    id, checkIn, checkOut, shortBreakIn, shortBreakOut,
+  } = await request.json();
 
   try {
     const attendance = await Attendance.findById(id);

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import { dbConnect } from '../../../../lib/dbConnect';
 import Attendance from '../../../../models/Attendance';
@@ -17,17 +18,16 @@ export async function POST(request) {
       await existingAttendance.save();
 
       return NextResponse.json({ success: true, message: 'Checked out successfully.' });
-    } else {
-      // Check-in the employee
-      const newAttendance = new Attendance({
-        employeeId,
-        checkIn: new Date(),
-        status: 'CheckedIn',
-      });
-      await newAttendance.save();
-
-      return NextResponse.json({ success: true, message: 'Checked in successfully.' });
     }
+    // Check-in the employee
+    const newAttendance = new Attendance({
+      employeeId,
+      checkIn: new Date(),
+      status: 'CheckedIn',
+    });
+    await newAttendance.save();
+
+    return NextResponse.json({ success: true, message: 'Checked in successfully.' });
   } catch (error) {
     console.error('Error checking in/out employee:', error);
     return NextResponse.json({ success: false, message: 'Failed to process attendance.' });

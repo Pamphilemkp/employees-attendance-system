@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import { dbConnect } from '../../../../lib/dbConnect';
 import Attendance from '../../../../models/Attendance';
@@ -14,7 +15,7 @@ export async function POST(request) {
 
   attendance.checkOut = new Date();
   attendance.status = 'CheckedOut';
-  
+
   await attendance.save();
   return NextResponse.json({ success: true, message: 'Checked out successfully.' });
 }

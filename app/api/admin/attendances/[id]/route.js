@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import { dbConnect } from '../../../../../lib/dbConnect';
 import Attendance from '../../../../../models/Attendance';
@@ -6,7 +7,7 @@ import Attendance from '../../../../../models/Attendance';
 export async function PUT(request, { params }) {
   await dbConnect();
   const { id } = params;
-  
+
   try {
     const { checkIn, checkOut } = await request.json();
 

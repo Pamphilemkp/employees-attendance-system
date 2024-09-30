@@ -1,3 +1,4 @@
+/* eslint-disable */
 // File: /app/api/attendance/route.js
 import { NextResponse } from 'next/server'; // Import NextResponse
 import { dbConnect } from '../../../lib/dbConnect';

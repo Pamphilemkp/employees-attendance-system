@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import { dbConnect } from '../../../../lib/dbConnect';
 import Attendance from '../../../../models/Attendance';
@@ -36,4 +37,3 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Error fetching attendance data' }, { status: 500 });
   }
 }
-

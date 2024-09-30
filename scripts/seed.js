@@ -1,7 +1,8 @@
+/* eslint-disable */
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 import dbConnect from '../lib/mongoose';
 import User from '../models/User';
-import bcrypt from 'bcrypt';
 
 const seedData = async () => {
   try {

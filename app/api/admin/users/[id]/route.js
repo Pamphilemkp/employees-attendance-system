@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { dbConnect } from '../../../../../lib/dbConnect';
 import User from '../../../../../models/User';
-import bcrypt from 'bcryptjs';
 
 export async function PUT(request, { params }) {
   await dbConnect();
   const { id } = params;
-  const { name, email, employeeId, role, password } = await request.json();
+  const {
+    name, email, employeeId, role, password,
+  } = await request.json();
 
   const user = await User.findById(id);
   if (!user) {

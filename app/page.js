@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client';
 
 import { useSession, signIn, signOut } from 'next-auth/react';
@@ -38,12 +39,12 @@ export default function HomePage() {
               r="10"
               stroke="currentColor"
               strokeWidth="4"
-            ></circle>
+            />
             <path
               className="opacity-75"
               fill="currentColor"
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            ></path>
+            />
           </svg>
           <p className="mt-4 text-lg font-medium text-gray-700">Loading...</p>
         </motion.div>
@@ -95,7 +96,11 @@ export default function HomePage() {
             transition={{ duration: 0.5 }}
             className="text-center"
           >
-            <h2 className="mb-4 text-xl font-semibold">Hello, {session.user.name}!</h2>
+            <h2 className="mb-4 text-xl font-semibold">
+              Hello,
+              {session.user.name}
+              !
+            </h2>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

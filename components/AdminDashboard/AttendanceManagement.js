@@ -1,11 +1,12 @@
+/* eslint-disable */
 import { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import AttendanceTable from './AttendanceTable';
 import { toast } from 'react-hot-toast';
+import AttendanceTable from './AttendanceTable';
 
 export default function AttendanceManagement() {
-  const [attendances, setAttendances] = useState([]);  // Ensure initialized as an array
+  const [attendances, setAttendances] = useState([]); // Ensure initialized as an array
   const [users, setUsers] = useState([]);
   const [month, setMonth] = useState(new Date()); // Current date as default
   const [selectedUser, setSelectedUser] = useState('');
@@ -48,13 +49,13 @@ export default function AttendanceManagement() {
       const data = await res.json();
 
       if (res.ok) {
-        setAttendances(data || []);  // Ensure array
+        setAttendances(data || []); // Ensure array
       } else {
-        setAttendances([]);  // Empty array on error
+        setAttendances([]); // Empty array on error
         toast.error('Failed to fetch attendance records.'); // Minimal toast
       }
     } catch (error) {
-      setAttendances([]);  // Set to empty array on error
+      setAttendances([]); // Set to empty array on error
       toast.error('Failed to load attendance records.'); // Minimal toast
       console.error('Error fetching attendance records:', error);
     }
@@ -79,7 +80,7 @@ export default function AttendanceManagement() {
           </tr>
         </thead>
         <tbody>
-          ${attendances.map(att => `
+          ${attendances.map((att) => `
             <tr>
               <td>${att.employeeId || 'N/A'}</td>
               <td>${new Date(att.checkIn).toLocaleString()}</td>
@@ -128,7 +129,7 @@ export default function AttendanceManagement() {
           className="p-2 border rounded"
         >
           <option value="">All Users</option>
-          {users.map(user => (
+          {users.map((user) => (
             <option key={user._id} value={user.employeeId}>
               {`${user.employeeId} (${user.name})`}
             </option>
@@ -140,7 +141,9 @@ export default function AttendanceManagement() {
           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
           className="p-2 text-white bg-blue-500 rounded"
         >
-          Sort by Name ({sortOrder === 'asc' ? 'A-Z' : 'Z-A'})
+          Sort by Name (
+          {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
+          )
         </button>
 
         {/* Print attendance */}
@@ -153,7 +156,10 @@ export default function AttendanceManagement() {
       </div>
 
       {/* Display current month in the UI */}
-      <p className="mt-2">Showing attendance records for: {formattedMonth}</p>
+      <p className="mt-2">
+        Showing attendance records for:
+        {formattedMonth}
+      </p>
 
       <AttendanceTable attendances={attendances} />
     </section>

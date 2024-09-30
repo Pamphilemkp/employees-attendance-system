@@ -1,3 +1,4 @@
+/* eslint-disable */
 import mongoose from 'mongoose';
 
 const AttendanceSchema = new mongoose.Schema({

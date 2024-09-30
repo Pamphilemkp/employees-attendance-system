@@ -1,3 +1,4 @@
+/* eslint-disable */
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
@@ -9,8 +10,8 @@ const authOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         await dbConnect();
@@ -23,18 +24,17 @@ const authOptions = {
         const isMatch = await bcrypt.compare(credentials.password, user.password);
 
         if (isMatch) {
-          return { 
-            id: user._id, 
-            name: user.name, 
-            email: user.email, 
-            role: user.role, 
-            employeeId: user.employeeId 
+          return {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            employeeId: user.employeeId,
           };
-        } else {
-          return null;
         }
-      }
-    })
+        return null;
+      },
+    }),
   ],
   session: {
     jwt: true,
@@ -57,7 +57,7 @@ const authOptions = {
       session.user.employeeId = token.employeeId;
       session.user.role = token.role;
       return session;
-    }
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {

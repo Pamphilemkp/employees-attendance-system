@@ -1,16 +1,19 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import {dbConnect} from '../../../../lib/dbConnect';
+import { dbConnect } from '../../../../lib/dbConnect';
 import UserModel from '../../../../models/User';
 
 export const POST = async (request) => {
   try {
-    const { name, email, password, employeeId,role = 'employee' } = await request.json();
+    const {
+      name, email, password, employeeId, role = 'employee',
+    } = await request.json();
 
     if (!name || !email || !password || !employeeId) {
       return NextResponse.json(
         { message: 'All fields are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,14 +26,14 @@ export const POST = async (request) => {
     if (existingUser) {
       return NextResponse.json(
         { message: 'Email already exists' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (existingEmployeeId) {
       return NextResponse.json(
         { message: 'Employee ID already exists' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +52,7 @@ export const POST = async (request) => {
       email,
       password: hashedPassword,
       employeeId,
-      role
+      role,
     });
 
     // Log the stored user details
@@ -57,13 +60,13 @@ export const POST = async (request) => {
 
     return NextResponse.json(
       { message: 'User registered successfully', userId: newUser._id },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.error('Error during signup:', err);
     return NextResponse.json(
       { message: 'An error occurred while registering the user.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };

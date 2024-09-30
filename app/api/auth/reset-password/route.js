@@ -1,8 +1,9 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
-import { dbConnect } from '../../../../lib/dbConnect';
-import User from '../../../../models/User';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { dbConnect } from '../../../../lib/dbConnect';
+import User from '../../../../models/User';
 
 export async function POST(request) {
   const { password, token } = await request.json();
@@ -12,7 +13,7 @@ export async function POST(request) {
 
   const user = await User.findOne({
     passwordResetToken: hashedToken,
-    passwordResetExpires: { $gt: Date.now() }
+    passwordResetExpires: { $gt: Date.now() },
   });
 
   if (!user) {

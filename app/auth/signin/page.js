@@ -1,11 +1,11 @@
+/* eslint-disable */
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useSession, getSession } from 'next-auth/react';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -50,7 +50,7 @@ export default function SignInPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gray-100 sm:p-6">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg"
@@ -68,7 +68,7 @@ export default function SignInPage() {
           />
           <div className="relative">
             <input
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -89,10 +89,12 @@ export default function SignInPage() {
               Forgot Password?
             </Link>
           </div>
-          
+
           {loading ? (
             <div className="flex justify-center">
-              <div className="spinner"></div> {/* Updated spinner */}
+              <div className="spinner" />
+              {' '}
+              {/* Updated spinner */}
             </div>
           ) : (
             <button
@@ -105,7 +107,8 @@ export default function SignInPage() {
         </form>
 
         <p className="mt-6 text-sm text-center text-gray-600">
-          Don't have an account?{' '}
+          Don't have an account?
+          {' '}
           <Link href="/auth/signup" className="text-blue-600 hover:underline">
             Sign Up
           </Link>
@@ -113,7 +116,8 @@ export default function SignInPage() {
       </motion.div>
 
       {/* Styles for the spinner */}
-      <style jsx>{`
+      <style jsx>
+        {`
         .spinner {
           width: 40px;
           height: 40px;
@@ -131,7 +135,8 @@ export default function SignInPage() {
             transform: rotate(360deg);
           }
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 }

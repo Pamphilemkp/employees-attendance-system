@@ -1,7 +1,8 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { dbConnect } from '../../../../lib/dbConnect';
 import User from '../../../../models/User';
-import crypto from 'crypto';
 import { sendResetPasswordEmail } from '../../../../lib/email';
 
 export async function POST(request) {

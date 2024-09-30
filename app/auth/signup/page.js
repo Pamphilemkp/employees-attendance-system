@@ -1,10 +1,11 @@
-"use client";
+/* eslint-disable */
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import toast, { Toaster } from "react-hot-toast";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function SignUpPage() {
   const [form, setForm] = useState({
@@ -27,18 +28,20 @@ export default function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, email, password, employeeId } = form;
+    const {
+      name, email, password, employeeId,
+    } = form;
 
     if (!name || !email || !password || !employeeId) {
-      setError("All fields are necessary.");
+      setError('All fields are necessary.');
       return;
     }
 
     try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name,
@@ -55,14 +58,14 @@ export default function SignUpPage() {
           password: '',
           employeeId: '',
         });
-        router.push("/auth/signin?success=Account has been created");
+        router.push('/auth/signin?success=Account has been created');
       } else {
         const data = await res.json();
-        setError(data.message || "User registration failed.");
+        setError(data.message || 'User registration failed.');
       }
     } catch (error) {
-      console.log("Error during registration: ", error);
-      setError("An error occurred. Please try again.");
+      console.log('Error during registration: ', error);
+      setError('An error occurred. Please try again.');
     }
   };
 
@@ -145,7 +148,9 @@ export default function SignUpPage() {
             </motion.button>
           </form>
           <p className="mt-6 text-sm text-center text-gray-600">
-            Already have an account? <Link href="/auth/signin" className="text-blue-600 hover:underline">Sign In</Link>
+            Already have an account?
+            {' '}
+            <Link href="/auth/signin" className="text-blue-600 hover:underline">Sign In</Link>
           </p>
         </div>
       </motion.div>

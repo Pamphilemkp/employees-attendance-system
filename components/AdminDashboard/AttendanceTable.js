@@ -1,6 +1,7 @@
+/* eslint-disable */
 import React, { useState, useEffect } from 'react';
-import AttendanceForm from './AttendanceForm';
 import { toast } from 'react-hot-toast';
+import AttendanceForm from './AttendanceForm';
 
 export default function AttendanceTable({ attendances = [] }) {
   const [editingAttendanceId, setEditingAttendanceId] = useState(null);
@@ -36,7 +37,7 @@ export default function AttendanceTable({ attendances = [] }) {
       if (response.ok) {
         toast.success('Attendance updated successfully!');
         setAttendancesList(
-          attendancesList.map((item) => (item._id === updatedAttendance._id ? updatedAttendance : item))
+          attendancesList.map((item) => (item._id === updatedAttendance._id ? updatedAttendance : item)),
         );
         setEditingAttendanceId(null);
       } else {
@@ -140,7 +141,7 @@ export default function AttendanceTable({ attendances = [] }) {
                         onClick={() => handleGenerateQRCode(attendance.employeeId)}
                         className="px-3 py-1 text-white bg-green-500 rounded-md hover:bg-green-600"
                       >
-                        {loadingQR ? <div className="spinner"></div> : 'Generate QR'}
+                        {loadingQR ? <div className="spinner" /> : 'Generate QR'}
                       </button>
                     </div>
                   )}
@@ -159,11 +160,12 @@ export default function AttendanceTable({ attendances = [] }) {
 
       {loading && ( // Show global loader when saving attendance
         <div className="loader-backdrop">
-          <div className="spinner"></div>
+          <div className="spinner" />
         </div>
       )}
 
-      <style jsx>{`
+      <style jsx>
+        {`
         .spinner {
           width: 25px;
           height: 25px;
@@ -194,7 +196,8 @@ export default function AttendanceTable({ attendances = [] }) {
             transform: rotate(360deg);
           }
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 }

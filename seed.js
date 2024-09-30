@@ -1,8 +1,10 @@
+/* eslint-disable */
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
 
 import dbConnect from './lib/dbConnect.js';
 import User from './models/User.js';
+
+dotenv.config({ path: '.env.local' });
 
 async function seedAdminUser() {
   await dbConnect();

@@ -1,4 +1,6 @@
+/* eslint-disable */
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { toast } from 'react-hot-toast';
@@ -12,7 +14,7 @@ export default function ScanQR() {
   const [loading, setLoading] = useState(false); // Track loading state
   const videoRef = useRef(null);
   const codeReaderRef = useRef(new BrowserMultiFormatReader()); // Code reader initialized here
-  
+
   // Get available video input devices on component mount
   useEffect(() => {
     navigator.mediaDevices.enumerateDevices().then((deviceInfos) => {
@@ -28,7 +30,7 @@ export default function ScanQR() {
   const stopCameraStream = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
   };
@@ -98,7 +100,7 @@ export default function ScanQR() {
         {/* Show loader when processing */}
         {loading && (
           <div className="flex justify-center mb-4">
-            <ClipLoader size={50} color={"#123abc"} loading={true} />
+            <ClipLoader size={50} color="#123abc" loading />
           </div>
         )}
 

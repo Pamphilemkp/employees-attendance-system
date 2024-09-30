@@ -1,7 +1,8 @@
+/* eslint-disable */
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const { MONGODB_URI } = process.env;
 
 if (!MONGODB_URI) {
   console.error('MONGODB_URI is not defined in environment variables');

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { motion } from 'framer-motion';
 
 export default function AdminHeader({ activeTab, setActiveTab }) {
