@@ -15,15 +15,29 @@ export default function ScanQR() {
   const videoRef = useRef(null);
   const codeReaderRef = useRef(new BrowserMultiFormatReader()); // Code reader initialized here
 
-  // Get available video input devices on component mount
+  // Request camera permissions and get available video input devices
   useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then((deviceInfos) => {
-      const videoDevices = deviceInfos.filter((device) => device.kind === 'videoinput');
-      setDevices(videoDevices);
-      if (videoDevices.length > 0) {
-        setSelectedDeviceId(videoDevices[0].deviceId); // Default to the first camera
+    const getPermissions = async () => {
+      try {
+        // Request camera permissions
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // After permission is granted, get the list of video input devices
+        const deviceInfos = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = deviceInfos.filter((device) => device.kind === 'videoinput');
+        
+        setDevices(videoDevices);
+        
+        if (videoDevices.length > 0) {
+          setSelectedDeviceId(videoDevices[0].deviceId); // Default to the first camera
+        }
+      } catch (error) {
+        console.error('Error accessing cameras:', error);
+        toast.error('Camera access denied. Please enable it in browser settings.');
       }
-    });
+    };
+
+    getPermissions();
   }, []);
 
   // Function to stop the camera stream
@@ -115,11 +129,15 @@ export default function ScanQR() {
             value={selectedDeviceId}
             className="w-full p-2 border rounded"
           >
-            {devices.map((device, index) => (
-              <option key={device.deviceId} value={device.deviceId}>
-                {device.label || `Camera ${index + 1}`}
-              </option>
-            ))}
+            {devices.length > 0 ? (
+              devices.map((device, index) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Camera ${index + 1}`}
+                </option>
+              ))
+            ) : (
+              <option disabled>No cameras available</option>
+            )}
           </select>
         </div>
 
