@@ -7,7 +7,6 @@ export default function AttendanceTable({ attendances = [] }) {
   const [editingAttendanceId, setEditingAttendanceId] = useState(null);
   const [attendancesList, setAttendancesList] = useState([]);
   const [loading, setLoading] = useState(false); // Global loader state
-  const [loadingQR, setLoadingQR] = useState(false); // Loader state for QR generation
 
   useEffect(() => {
     console.log('Received attendances:', attendances);
@@ -55,42 +54,6 @@ export default function AttendanceTable({ attendances = [] }) {
     setEditingAttendanceId(null);
   };
 
-  const handleGenerateQRCode = async (employeeId) => {
-    setLoadingQR(true); // Show QR loader
-    try {
-      const res = await fetch(`/api/admin/generate-qr?employeeId=${employeeId}`);
-      const data = await res.json();
-
-      if (data.success) {
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>QR Code for Employee ${employeeId}</title>
-              <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                h2 { margin-bottom: 20px; }
-              </style>
-            </head>
-            <body>
-              <h2>QR Code for Employee ID: ${employeeId}</h2>
-              <img src="${data.qrCode}" alt="QR Code" />
-              <script>window.print();</script>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-      } else {
-        toast.error('Failed to generate QR code');
-      }
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-      toast.error('Failed to generate QR code');
-    } finally {
-      setLoadingQR(false); // Hide QR loader
-    }
-  };
-
   const formatDate = (date) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(date).toLocaleDateString(undefined, options);
@@ -130,20 +93,12 @@ export default function AttendanceTable({ attendances = [] }) {
                       />
                     </>
                   ) : (
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditClick(attendance._id)}
-                        className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleGenerateQRCode(attendance.employeeId)}
-                        className="px-3 py-1 text-white bg-green-500 rounded-md hover:bg-green-600"
-                      >
-                        {loadingQR ? <div className="spinner" /> : 'Generate QR'}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleEditClick(attendance._id)}
+                      className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
                   )}
                 </td>
               </tr>

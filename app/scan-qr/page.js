@@ -5,31 +5,27 @@ import { useState, useEffect, useRef } from 'react';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { toast } from 'react-hot-toast';
 import ClipLoader from 'react-spinners/ClipLoader'; // Import loader
+import Link from 'next/link'; // For navigation to the home page
 
 export default function ScanQR() {
-  const [scanResult, setScanResult] = useState('');
-  const [isScanning, setIsScanning] = useState(true);
-  const [devices, setDevices] = useState([]); // Store available cameras
-  const [selectedDeviceId, setSelectedDeviceId] = useState(''); // Store selected camera ID
-  const [loading, setLoading] = useState(false); // Track loading state
-  const videoRef = useRef(null);
-  const codeReaderRef = useRef(new BrowserMultiFormatReader()); // Code reader initialized here
+  const [scanResult, setScanResult] = useState(''); // Store scanned employee ID
+  const [isScanning, setIsScanning] = useState(true); // Scanning state
+  const [devices, setDevices] = useState([]); // Available cameras
+  const [selectedDeviceId, setSelectedDeviceId] = useState(''); // Selected camera ID
+  const [loading, setLoading] = useState(false); // Loader state
+  const videoRef = useRef(null); // Video reference for the camera stream
+  const codeReaderRef = useRef(new BrowserMultiFormatReader()); // QR code reader instance
 
   // Request camera permissions and get available video input devices
   useEffect(() => {
     const getPermissions = async () => {
       try {
-        // Request camera permissions
         await navigator.mediaDevices.getUserMedia({ video: true });
-        
-        // After permission is granted, get the list of video input devices
         const deviceInfos = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = deviceInfos.filter((device) => device.kind === 'videoinput');
-        
         setDevices(videoDevices);
-        
         if (videoDevices.length > 0) {
-          setSelectedDeviceId(videoDevices[0].deviceId); // Default to the first camera
+          setSelectedDeviceId(videoDevices[0].deviceId);
         }
       } catch (error) {
         console.error('Error accessing cameras:', error);
@@ -40,7 +36,7 @@ export default function ScanQR() {
     getPermissions();
   }, []);
 
-  // Function to stop the camera stream
+  // Stop the camera stream
   const stopCameraStream = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
@@ -52,37 +48,36 @@ export default function ScanQR() {
   // Start scanning when the camera is available
   useEffect(() => {
     if (isScanning && selectedDeviceId) {
-      // Stop any existing stream before starting a new one
-      stopCameraStream();
-
+      stopCameraStream(); // Stop any previous stream
       codeReaderRef.current.decodeFromVideoDevice(selectedDeviceId, videoRef.current, async (result, err) => {
         if (result) {
           const employeeId = result.getText();
-          setScanResult(employeeId);
-          setIsScanning(false); // Stop scanning after result
-          setLoading(true); // Show loader while processing
+          setScanResult(employeeId); // Set the scanned employee ID
+          setIsScanning(false); // Stop scanning
+          setLoading(true); // Show loader
           toast.success('QR Code Scanned! Processing...');
 
           // Trigger check-in/check-out API call
           await handleCheckInOrCheckOut(employeeId);
 
-          // Reload the page after processing
+          // Reload the scanner after processing
           setTimeout(() => {
-            window.location.reload(); // Reload the page to enable new scan
-          }, 2000); // Add a 2-second delay before reload
+            setScanResult(''); // Clear the result for a new scan
+            setIsScanning(true); // Start scanning again
+          }, 2000); // 2-second delay for success message
         }
         if (err && err.name !== 'NotFoundException') {
-          console.error(err); // Log errors, but ignore not found exception
+          console.error(err); // Log errors but ignore "not found" exceptions
         }
       });
 
       return () => {
-        stopCameraStream(); // Stop the camera stream when component unmounts or scanning stops
+        stopCameraStream(); // Stop the camera stream on cleanup
       };
     }
   }, [isScanning, selectedDeviceId]);
 
-  // Function to handle check-in/check-out based on the scanned employee ID
+  // Handle check-in/check-out based on the scanned employee ID
   const handleCheckInOrCheckOut = async (employeeId) => {
     try {
       const response = await fetch('/api/attendance/check', {
@@ -94,7 +89,7 @@ export default function ScanQR() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(data.message); // Show success message from server (check-in or check-out)
+        toast.success(data.message); // Success message for check-in or check-out
       } else {
         toast.error(data.message || 'Failed to mark attendance');
       }
@@ -159,6 +154,15 @@ export default function ScanQR() {
           >
             {isScanning ? 'Stop Scanning' : 'Start Scanning'}
           </button>
+        </div>
+
+        {/* Button to navigate back to the home page */}
+        <div className="mt-6 text-center">
+          <Link href="/">
+            <button className="px-4 py-2 text-white bg-gray-700 rounded-lg hover:bg-gray-800">
+              Go to Home
+            </button>
+          </Link>
         </div>
       </div>
     </div>

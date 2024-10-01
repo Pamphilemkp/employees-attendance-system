@@ -1,14 +1,16 @@
 /* eslint-disable */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import AttendanceManagement from './AttendanceManagement';
 import UserManagement from './UserManagement';
+import { useRouter } from 'next/navigation'; // Import useRouter for navigation
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('attendance');
+  const router = useRouter(); // Initialize router for navigation
 
   return (
     <motion.div
@@ -37,6 +39,13 @@ export default function AdminDashboard() {
             className={`p-2 ${activeTab === 'users' ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'} rounded`}
           >
             Manage Users
+          </button>
+          {/* Home button to navigate back to the Home page */}
+          <button
+            onClick={() => router.push('/')}
+            className="p-2 text-white bg-green-500 rounded"
+          >
+            Go to Home
           </button>
         </div>
       </motion.header>

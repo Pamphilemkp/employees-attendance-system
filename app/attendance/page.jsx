@@ -5,12 +5,16 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSession } from 'next-auth/react'; // Import session for authentication
+import Link from 'next/link'; // For navigation to the home page
+import ClipLoader from 'react-spinners/ClipLoader'; // For loading state
 
 export default function EmployeeDashboard() {
   const { data: session, status } = useSession(); // Manage session and login state
   const [attendances, setAttendances] = useState([]);
   const [month, setMonth] = useState(new Date());
   const [employeeIdInput, setEmployeeIdInput] = useState(''); // Input state for employee ID
+  const [loadingQR, setLoadingQR] = useState(false); // State for loading QR generation
+  const [qrCode, setQrCode] = useState(''); // State to store the QR code image URL
 
   // Format the month as a string (e.g., "September 2024")
   const formattedMonth = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -41,6 +45,35 @@ export default function EmployeeDashboard() {
       fetchAttendances();
     }
   }, [month, session]);
+
+  // Fetch QR code for the logged-in employee
+  const fetchQRCode = async () => {
+    const employeeId = session?.user?.employeeId;
+    if (!employeeId) return;
+
+    setLoadingQR(true); // Start loading
+    try {
+      const res = await fetch(`/api/admin/generate-qr?employeeId=${employeeId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setQrCode(data.qrCode); // Set QR code image
+      } else {
+        toast.error('Failed to generate QR code');
+      }
+    } catch (error) {
+      toast.error('Failed to generate QR code');
+    } finally {
+      setLoadingQR(false); // Stop loading
+    }
+  };
+
+  // Fetch QR code on mount
+  useEffect(() => {
+    if (session?.user?.employeeId) {
+      fetchQRCode(); // Fetch QR code when the session loads
+    }
+  }, [session]);
 
   // Handle Check-In functionality
   const handleCheckIn = async () => {
@@ -115,10 +148,17 @@ export default function EmployeeDashboard() {
 
         {/* Display employee ID from session */}
         <div className="mb-4 text-center">
-          <p className="text-gray-600">
-            Logged in as Employee ID:
-            {session.user.employeeId}
-          </p>
+          <p className="text-gray-600">Logged in as Employee ID: {session.user.employeeId}</p>
+        </div>
+
+        {/* Show QR Code for the employee */}
+        <div className="mb-4 text-center">
+          <h3 className="mb-2 text-lg font-semibold">Your QR Code</h3>
+          {loadingQR ? (
+            <ClipLoader size={50} color="#123abc" loading />
+          ) : (
+            <img src={qrCode} alt="QR Code" className="mx-auto" />
+          )}
         </div>
 
         {/* Input for manual Employee ID if not logged in */}
@@ -152,8 +192,7 @@ export default function EmployeeDashboard() {
         {attendances.length > 0 ? (
           <div className="mt-6">
             <h3 className="mb-4 text-lg font-semibold">
-              Attendance Records for
-              {formattedMonth}
+              Attendance Records for {formattedMonth}
             </h3>
 
             {/* Scrollable Table */}
@@ -182,12 +221,18 @@ export default function EmployeeDashboard() {
           </div>
         ) : (
           <div className="mt-6 text-center text-gray-500">
-            No attendance records found for
-            {' '}
-            {formattedMonth}
-            .
+            No attendance records found for {formattedMonth}.
           </div>
         )}
+
+        {/* Button to navigate back to the home page */}
+        <motion.div className="mt-6 text-center">
+          <Link href="/">
+            <button className="px-4 py-2 text-white bg-gray-700 rounded-lg hover:bg-gray-800">
+              Go to Home
+            </button>
+          </Link>
+        </motion.div>
       </div>
     </div>
   );

@@ -12,6 +12,8 @@ export default function UserManagement() {
     role: 'employee',
     password: '', // Password field added for user creation/update
   });
+  const [loadingQR, setLoadingQR] = useState(false); // State for loading QR generation
+  const [monthlyWorkingHours, setMonthlyWorkingHours] = useState({}); // State to store monthly working hours for each user
 
   useEffect(() => {
     fetchUsers();
@@ -27,6 +29,7 @@ export default function UserManagement() {
 
       if (Array.isArray(data)) {
         setUsers(data);
+        fetchMonthlyWorkingHours(data); // Fetch monthly working hours for all users
       } else {
         toast.error('Invalid user data format.');
         console.error('Expected an array of users, but got:', data);
@@ -35,6 +38,39 @@ export default function UserManagement() {
       toast.error('Failed to load users.');
       console.error('Failed to load users:', error);
     }
+  };
+
+  // Fetch total working hours for each user for the current month
+  const fetchMonthlyWorkingHours = async (users) => {
+    const month = new Date().toISOString().slice(0, 7); // Format current month as "YYYY-MM"
+    const workingHours = {};
+
+    await Promise.all(
+      users.map(async (user) => {
+        try {
+          const res = await fetch(`/api/admin/attendances?month=${month}&employeeId=${user.employeeId}`);
+          const attendanceRecords = await res.json();
+
+          if (Array.isArray(attendanceRecords)) {
+            const totalHours = attendanceRecords.reduce((acc, record) => {
+              if (record.checkIn && record.checkOut) {
+                const checkInTime = new Date(record.checkIn);
+                const checkOutTime = new Date(record.checkOut);
+                const hoursWorked = (checkOutTime - checkInTime) / (1000 * 60 * 60); // Calculate hours worked
+                return acc + hoursWorked;
+              }
+              return acc;
+            }, 0);
+
+            workingHours[user.employeeId] = totalHours.toFixed(2); // Store total hours, rounded to 2 decimal places
+          }
+        } catch (error) {
+          console.error(`Failed to fetch attendance for ${user.employeeId}:`, error);
+        }
+      })
+    );
+
+    setMonthlyWorkingHours(workingHours); // Update state with monthly working hours
   };
 
   // Handle form input change
@@ -147,6 +183,42 @@ export default function UserManagement() {
     });
   };
 
+  // Function to handle QR code generation
+  const handleGenerateQRCode = async (employeeId) => {
+    setLoadingQR(true);
+    try {
+      const res = await fetch(`/api/admin/generate-qr?employeeId=${employeeId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>QR Code for Employee ${employeeId}</title>
+              <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h2 { margin-bottom: 20px; }
+              </style>
+            </head>
+            <body>
+              <h2>QR Code for Employee ID: ${employeeId}</h2>
+              <img src="${data.qrCode}" alt="QR Code" />
+              <script>window.print();</script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } else {
+        toast.error('Failed to generate QR code');
+      }
+    } catch (error) {
+      toast.error('Failed to generate QR code');
+    } finally {
+      setLoadingQR(false);
+    }
+  };
+
   return (
     <section>
       <Toaster />
@@ -218,6 +290,7 @@ export default function UserManagement() {
             <th className="px-4 py-3 text-left">Email</th>
             <th className="px-4 py-3 text-left">Employee ID</th>
             <th className="px-4 py-3 text-left">Role</th>
+            <th className="px-4 py-3 text-left">Monthly Hours</th> {/* New Column for Monthly Working Hours */}
             <th className="px-4 py-3 text-left">Actions</th>
           </tr>
         </thead>
@@ -229,6 +302,7 @@ export default function UserManagement() {
                 <td className="px-4 py-3">{safeRender(user.email)}</td>
                 <td className="px-4 py-3">{safeRender(user.employeeId)}</td>
                 <td className="px-4 py-3">{safeRender(user.role)}</td>
+                <td className="px-4 py-3">{monthlyWorkingHours[user.employeeId] || 'N/A'}</td> {/* Display monthly hours */}
                 <td className="flex items-center px-4 py-3">
                   <button
                     onClick={() => handleEditUser(user)}
@@ -242,18 +316,44 @@ export default function UserManagement() {
                   >
                     Delete
                   </button>
+                  <button
+                    onClick={() => handleGenerateQRCode(user.employeeId)}
+                    className="p-2 ml-2 text-white bg-green-500 rounded"
+                  >
+                    {loadingQR ? <div className="spinner" /> : 'Generate QR'}
+                  </button>
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="5" className="px-4 py-3 text-center">
+              <td colSpan="6" className="px-4 py-3 text-center">
                 No users found.
               </td>
             </tr>
           )}
         </tbody>
       </table>
+
+      <style jsx>{`
+        .spinner {
+          width: 25px;
+          height: 25px;
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </section>
   );
 }

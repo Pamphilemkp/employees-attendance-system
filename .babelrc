@@ -1,11 +1,10 @@
 {
-    "presets": ["next/babel"],
-    "plugins": ["@babel/plugin-transform-runtime"],
-    "overrides": [
-      {
-        "test": "*.jsx", // Use Babel only for .jsx files
-        "presets": ["next/babel"]
-      }
-    ]
-  }
-  
+  "presets": ["next/babel"],
+  "plugins": ["@babel/plugin-transform-runtime"],
+  "overrides": [
+    {
+      "test": "*.jsx", // Use Babel only for .jsx files
+      "presets": ["next/babel"]
+    }
+  ]
+}
