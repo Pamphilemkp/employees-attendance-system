@@ -34,6 +34,11 @@ export default function ScanQR() {
     };
 
     getPermissions();
+
+    // Cleanup when component unmounts or when navigation happens
+    return () => {
+      stopCameraStream();
+    };
   }, []);
 
   // Stop the camera stream
@@ -45,7 +50,7 @@ export default function ScanQR() {
     }
   };
 
-  // Start scanning when the camera is available
+  // Re-initialize scanning when the component is re-mounted or when the route changes
   useEffect(() => {
     if (isScanning && selectedDeviceId) {
       stopCameraStream(); // Stop any previous stream
@@ -63,8 +68,8 @@ export default function ScanQR() {
           // Reload the scanner after processing
           setTimeout(() => {
             setScanResult(''); // Clear the result for a new scan
-            setIsScanning(true); // Start scanning again
-          }, 2000); // 2-second delay for success message
+            setIsScanning(true); // Re-enable scanning
+          }, 2000); // Add 2-second delay before allowing new scan
         }
         if (err && err.name !== 'NotFoundException') {
           console.error(err); // Log errors but ignore "not found" exceptions
@@ -80,10 +85,21 @@ export default function ScanQR() {
   // Handle check-in/check-out based on the scanned employee ID
   const handleCheckInOrCheckOut = async (employeeId) => {
     try {
+      const cyprusTime = new Date().toLocaleString('en-US', {
+        timeZone: 'Asia/Nicosia',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+
       const response = await fetch('/api/attendance/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employeeId }),
+        body: JSON.stringify({ employeeId, time: cyprusTime }), // Send employee ID and Cyprus time
       });
 
       const data = await response.json();
@@ -156,12 +172,10 @@ export default function ScanQR() {
           </button>
         </div>
 
-        {/* Button to navigate back to the home page */}
-        <div className="mt-6 text-center">
-          <Link href="/">
-            <button className="px-4 py-2 text-white bg-gray-700 rounded-lg hover:bg-gray-800">
-              Go to Home
-            </button>
+        {/* Button to go to Home page */}
+        <div className="mt-4 text-center">
+          <Link href="/" passHref>
+            <a className="px-4 py-2 text-white bg-gray-600 rounded">Go to Home</a>
           </Link>
         </div>
       </div>
