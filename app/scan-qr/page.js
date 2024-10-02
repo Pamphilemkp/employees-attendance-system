@@ -13,6 +13,7 @@ export default function ScanQR() {
   const [devices, setDevices] = useState([]); // Available cameras
   const [selectedDeviceId, setSelectedDeviceId] = useState(''); // Selected camera ID
   const [loading, setLoading] = useState(false); // Loader state
+  const [scanComplete, setScanComplete] = useState(false); // Track scan completion
   const videoRef = useRef(null); // Video reference for the camera stream
   const codeReaderRef = useRef(new BrowserMultiFormatReader()); // QR code reader instance
 
@@ -55,12 +56,12 @@ export default function ScanQR() {
     if (isScanning && selectedDeviceId) {
       stopCameraStream(); // Stop any previous stream
       codeReaderRef.current.decodeFromVideoDevice(selectedDeviceId, videoRef.current, async (result, err) => {
-        if (result) {
+        if (result && !scanComplete) {
           const employeeId = result.getText();
           setScanResult(employeeId); // Set the scanned employee ID
-          setIsScanning(false); // Stop scanning
+          setScanComplete(true); // Mark scan as complete to avoid multiple scans
           setLoading(true); // Show loader
-          toast.success('QR Code Scanned! Processing...');
+          toast.success('QR Code Scanned! Processing...', { id: 'scan-toast' }); // Use a unique toast ID to avoid duplicate toasts
 
           // Trigger check-in/check-out API call
           await handleCheckInOrCheckOut(employeeId);
@@ -69,6 +70,7 @@ export default function ScanQR() {
           setTimeout(() => {
             setScanResult(''); // Clear the result for a new scan
             setIsScanning(true); // Re-enable scanning
+            setScanComplete(false); // Reset scan completion
           }, 2000); // Add 2-second delay before allowing new scan
         }
         if (err && err.name !== 'NotFoundException') {
@@ -80,7 +82,7 @@ export default function ScanQR() {
         stopCameraStream(); // Stop the camera stream on cleanup
       };
     }
-  }, [isScanning, selectedDeviceId]);
+  }, [isScanning, selectedDeviceId, scanComplete]);
 
   // Handle check-in/check-out based on the scanned employee ID
   const handleCheckInOrCheckOut = async (employeeId) => {
@@ -93,7 +95,7 @@ export default function ScanQR() {
         second: '2-digit',
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric'
+        year: 'numeric',
       });
 
       const response = await fetch('/api/attendance/check', {
@@ -105,13 +107,13 @@ export default function ScanQR() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success(data.message); // Success message for check-in or check-out
+        toast.success(data.message, { id: 'check-toast' }); // Success message for check-in or check-out
       } else {
-        toast.error(data.message || 'Failed to mark attendance');
+        toast.error(data.message || 'Failed to mark attendance', { id: 'error-toast' });
       }
     } catch (error) {
       console.error('Error during check-in/check-out:', error);
-      toast.error('Failed to mark attendance');
+      toast.error('Failed to mark attendance', { id: 'error-toast' });
     } finally {
       setLoading(false); // Hide loader after response
     }
@@ -174,8 +176,8 @@ export default function ScanQR() {
 
         {/* Button to go to Home page */}
         <div className="mt-4 text-center">
-          <Link href="/" passHref>
-            <a className="px-4 py-2 text-white bg-gray-600 rounded">Go to Home</a>
+          <Link href="/" className="px-4 py-2 text-white bg-gray-600 rounded">
+            Go to Home
           </Link>
         </div>
       </div>
