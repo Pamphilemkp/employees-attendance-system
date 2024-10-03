@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import ClipLoader from 'react-spinners/ClipLoader'; // Import loader for smoother UX
-
+import AttendanceForm from './AttendanceForm';
 export default function AttendanceTable({ attendances = [] }) {
   const [editingAttendanceId, setEditingAttendanceId] = useState(null);
   const [attendancesList, setAttendancesList] = useState([]);
