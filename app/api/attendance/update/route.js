@@ -11,16 +11,19 @@ export async function POST(request) {
   } = await request.json();
 
   try {
+    // Find the attendance record by ID
     const attendance = await Attendance.findById(id);
     if (!attendance) {
       return NextResponse.json({ success: false, message: 'Attendance record not found.' });
     }
 
+    // Update the relevant fields if provided
     attendance.checkIn = checkIn || attendance.checkIn;
     attendance.checkOut = checkOut || attendance.checkOut;
     attendance.shortBreakIn = shortBreakIn || attendance.shortBreakIn;
     attendance.shortBreakOut = shortBreakOut || attendance.shortBreakOut;
 
+    // Save the updated attendance record
     await attendance.save();
     return NextResponse.json({ success: true, message: 'Attendance updated successfully!' });
   } catch (error) {

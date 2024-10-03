@@ -1,22 +1,38 @@
 /* eslint-disable */
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import AttendanceForm from './AttendanceForm';
+import ClipLoader from 'react-spinners/ClipLoader'; // Import loader for smoother UX
 
 export default function AttendanceTable({ attendances = [] }) {
   const [editingAttendanceId, setEditingAttendanceId] = useState(null);
   const [attendancesList, setAttendancesList] = useState([]);
-  const [loading, setLoading] = useState(false); // Global loader state
+  const [loading, setLoading] = useState(false); // Global loader state for saving attendance
+  const [deleteLoading, setDeleteLoading] = useState(false); // Loader for delete action
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
 
   useEffect(() => {
-    console.log('Received attendances:', attendances);
-
     if (Array.isArray(attendances)) {
-      setAttendancesList(attendances);
+      // Filter attendances to ensure only one record per employee per day
+      const filteredAttendances = filterDailyAttendances(attendances);
+      setAttendancesList(filteredAttendances);
     } else {
       console.error('Invalid attendances data:', attendances);
     }
   }, [attendances]);
+
+  // Filter function to remove multiple records for the same employee on the same day
+  const filterDailyAttendances = (attendanceData) => {
+    const uniqueAttendances = {};
+    return attendanceData.filter((attendance) => {
+      const attendanceDate = new Date(attendance.checkIn).toLocaleDateString();
+      const key = `${attendance.employeeId}-${attendanceDate}`;
+      if (!uniqueAttendances[key]) {
+        uniqueAttendances[key] = true;
+        return true; // Include this record
+      }
+      return false; // Exclude duplicate record for the same day
+    });
+  };
 
   const handleEditClick = (attendanceId) => {
     setEditingAttendanceId(attendanceId);
@@ -47,6 +63,32 @@ export default function AttendanceTable({ attendances = [] }) {
       toast.error('Error updating attendance');
     } finally {
       setLoading(false); // Hide loader
+    }
+  };
+
+  const handleDeleteClick = (attendanceId) => {
+    setDeleteConfirm(attendanceId); // Show delete confirmation
+  };
+
+  const confirmDeleteAttendance = async (attendanceId) => {
+    setDeleteLoading(true); // Show loader while deleting
+    try {
+      const response = await fetch(`/api/admin/attendances/${attendanceId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Attendance deleted successfully!');
+        setAttendancesList(attendancesList.filter((item) => item._id !== attendanceId)); // Remove deleted record
+      } else {
+        toast.error('Failed to delete attendance');
+      }
+    } catch (error) {
+      console.error('Error deleting attendance:', error);
+      toast.error('Error deleting attendance');
+    } finally {
+      setDeleteConfirm(null); // Hide delete confirmation
+      setDeleteLoading(false); // Hide loader after delete
     }
   };
 
@@ -85,20 +127,26 @@ export default function AttendanceTable({ attendances = [] }) {
                 <td className="px-4 py-3">{calculateHoursWorked(attendance)}</td>
                 <td className="px-4 py-3 text-center">
                   {editingAttendanceId === attendance._id ? (
-                    <>
-                      <AttendanceForm
-                        attendance={attendance}
-                        onSave={handleSaveAttendance}
-                        onCancel={handleCancelEdit}
-                      />
-                    </>
+                    <AttendanceForm
+                      attendance={attendance}
+                      onSave={handleSaveAttendance}
+                      onCancel={handleCancelEdit}
+                    />
                   ) : (
-                    <button
-                      onClick={() => handleEditClick(attendance._id)}
-                      className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditClick(attendance._id)}
+                        className="px-3 py-1 text-white bg-blue-500 rounded-md hover:bg-blue-600"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(attendance._id)}
+                        className="px-3 py-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </td>
               </tr>
@@ -113,14 +161,42 @@ export default function AttendanceTable({ attendances = [] }) {
         </tbody>
       </table>
 
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
+          <div className="p-6 bg-white rounded-lg shadow-lg">
+            <p className="mb-4 text-lg">Are you sure you want to delete this record?</p>
+            <div className="flex justify-between space-x-4">
+              <button
+                onClick={() => confirmDeleteAttendance(deleteConfirm)}
+                className="px-4 py-2 text-white bg-red-600 rounded"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-white bg-gray-400 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading && ( // Show global loader when saving attendance
         <div className="loader-backdrop">
           <div className="spinner" />
         </div>
       )}
 
-      <style jsx>
-        {`
+      {deleteLoading && ( // Loader for delete process
+        <div className="loader-backdrop">
+          <div className="spinner" />
+        </div>
+      )}
+
+      <style jsx>{`
         .spinner {
           width: 25px;
           height: 25px;
@@ -151,8 +227,7 @@ export default function AttendanceTable({ attendances = [] }) {
             transform: rotate(360deg);
           }
         }
-      `}
-      </style>
+      `}</style>
     </div>
   );
 }
